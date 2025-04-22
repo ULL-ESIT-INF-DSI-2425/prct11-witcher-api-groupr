@@ -1,5 +1,4 @@
-import { connect } from 'mongoose';
-import { AssetType, Asset } from './bienes.js';
+import {AssetModel } from './bienes.js';
 import express from 'express';
 import './db/mongoose.js'; // Las 3 bases de datos
 

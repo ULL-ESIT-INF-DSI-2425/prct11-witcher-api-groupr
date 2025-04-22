@@ -91,5 +91,27 @@ const AssetSchema = new Schema<Asset>({
     type: String,
     required: true,
     trim: true
+  },
+  crown_value: {
+    type: Number,
+    required: true,
+    trim: true,
+    validate: (value: number) => {
+      if ( value <= 0) {
+        throw new Error('The crown value has to be more than 0');
+      }
+    }
+  }, 
+  type: {
+    type: String,
+    required: true, 
+    trim: true,
+    validate: (value: string) => {
+      if (!Object.values(AssetType).includes(value as AssetType)) {
+        throw new Error(`Invalid asset type: ${value}`);
+      }
+    }
   }
 })
+
+export const AssetModel = model<Asset>('AssetModel', AssetSchema)
