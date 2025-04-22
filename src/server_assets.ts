@@ -9,4 +9,11 @@ const port = process.env.PORT || 3000
 app.use(express.json())
 
 app.post('/assets', (req, res) => {
+  const asset = new AssetModel(req.body)
+
+  asset.save().then((note) => {
+    res.send(note)
+  }).catch((error) => {
+    res.send(error)
+  })
 })
