@@ -3,3 +3,4 @@ node_modules
 coverage
 mongodb
 mongodb-data
+src/db/
