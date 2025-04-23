@@ -40,5 +40,5 @@ export const ClientSchema = new Schema<ClientDocumentInterface>({
   }
 });
 
-export const ClientModel = clientsDB.model<ClientDocumentInterface>('Client', ClientSchema)
+export const Client = clientsDB.model<ClientDocumentInterface>('Client', ClientSchema)
 
