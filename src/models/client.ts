@@ -1,4 +1,4 @@
-import { Document, Schema, model } from 'mongoose';
+import { Document, Schema } from 'mongoose';
 import { clientsDB } from '../db/mongoose.js';
 
 export enum Race {
@@ -40,5 +40,5 @@ export const ClientSchema = new Schema<ClientDocumentInterface>({
   }
 });
 
-export const Client = clientsDB.model<ClientDocumentInterface>('Client', ClientSchema)
+export const ClientModel = clientsDB.model<ClientDocumentInterface>('Client', ClientSchema)
 

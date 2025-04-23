@@ -1,5 +1,5 @@
-import { Document, Schema, model } from 'mongoose';
-import { assetsDB } from './db/mongoose.js';
+import { Document, Schema } from 'mongoose';
+import { assetsDB } from '../db/mongoose.js';
 
 
 /**
