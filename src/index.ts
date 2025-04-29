@@ -1,7 +1,7 @@
 import express from 'express';
 import './db/mongoose.js';
 import { Note } from './models/note.js';
-import {clientApp} from './client_server.js'
+import {clientApp} from './server_clients.js'
 
 const app = express();
 const port = process.env.PORT || 3000;
