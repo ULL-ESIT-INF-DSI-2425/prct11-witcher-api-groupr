@@ -2,27 +2,32 @@ import express from 'express';
 import './db/mongoose.js';
 import { Client } from './models/client.js';
 
-const app = express()
-const port = process.env.PORRT || 3000
-app.use(express.json())
+export const clientApp = express.Router()
+
+clientApp.use(express.json())
 
 // Post requests
-app.post('/hunters', (req, res) => {
-  const client = new Client(req.body)
-  client.save()
-  .then((client) => {
-    res.status(201).send(client)
-  })
-  .catch((err) => {
-    res.status(400).send({
-      error: err
-    })
-  })
+clientApp.post('/hunters', async (req, res) => {
+  if (!req.body) {
+    res.status(400).send('Hunter`s characteristics must be given on the body')
+  }
+  else {
+    try {
+      const client = new Client(req.body)
+      await client.save()
+      res.status(201).send(client)
+    }
+    catch (err) {
+      res.status(500).send({
+        error: err
+      })
+    }
+  }
 })
 
 //Modifying requests
 
-app.patch('/hunters', (req, res) => {
+clientApp.patch('/hunters', async (req, res) => {
   if (!req.query.id) {
     res.status(400).send({
       error: 'An ID must be given on query'
@@ -43,27 +48,28 @@ app.patch('/hunters', (req, res) => {
       })
     }
     else {
-      Client.findOneAndUpdate({id: Number(req.query.id)}, req.body, {
-        new: true,
-        runValidators: true
-      })
-      .then((client) => {
+      try {
+        const client = await Client.findOneAndUpdate({id: Number(req.query.id)}, req.body, {
+          new: true,
+          runValidators: true
+        })
         if (!client) {
           res.status(404).send()
         }
         else {
           res.status(200).send(client)
         }
-      })
-      .catch((err) => {
+      }
+      catch(err) {
         res.status(500).send({
           error: err
         })
-      })
+      }
     }
   }
 })
-app.patch('/hunters/:id', (req, res) => {
+
+clientApp.patch('/hunters/:id', async (req, res) => {
   if (!req.body) {
     res.status(400).send({
       error: 'Body not ptovided'
@@ -79,90 +85,91 @@ app.patch('/hunters/:id', (req, res) => {
       })
     }
     else {
-      Client.findByIdAndUpdate(req.params.id, req.body, {
-        new: true,
-        runValidators: true
-      })
-      .then((client) => {
+      try {
+        const client = await Client.findByIdAndUpdate(req.params.id, req.body, {
+          new: true,
+          runValidators: true
+        })
         if (!client) {
           res.status(404).send()
         }
         else {
           res.status(200).send(client)
         }
-      })
-      .catch((err) => {
+      }
+      catch(err)  {
         res.status(500).send({
           error: err
         })
-      })
+      }
     }
   }
 })
 
 //Reading requests
-app.get('/hunters', (req, res) => {
+clientApp.get('/hunters', async (req, res) => {
   const filter = req.query.id? {id: Number(req.query.id)} : {}
-  Client.find(filter)
-  .then((clients) => {
+  try {
+    const clients = await Client.find(filter)
     if (clients.length === 0) {
       res.status(404).send()
     }
     else {
       res.status(200).send(clients)
     }
-  })
-  .catch(() => {
-    res.status(500).send()
-  })
+  }
+  catch(err) {
+    res.status(500).send(err)
+  }
 })
-app.get('/hunters/:id', (req, res) => {
-  Client.findById(req.params.id)
-  .then((client) => {
+
+clientApp.get('/hunters/:id', async (req, res) => {
+  try {
+    const client = await Client.findById(req.params.id)
     if (!client) {
       res.status(404).send()
     }
     else {
       res.status(201).send(client)
     }
-  })
-  .catch((err) => {
+  }
+  catch(err) {
     res.status(500).send({
       error: err
     })
-  })
+  }
 })
 
 //Deleting requests
-app.delete('/hunters', (req, res) => {
+clientApp.delete('/hunters', async (req, res) => {
   if (!req.query.id) {
     res.status(400).send({
       error: 'An id must be provided on query'
     })
   }
   else {
-    Client.findOneAndDelete({id: Number(req.query.id)})
-    .then((client) => {
+    try {
+      const client = await Client.findOneAndDelete({id: Number(req.query.id)})
       if (!client) {
         res.status(404).send()
       }
       else {
         res.status(200).send(client)
       }
-    })
-    .catch(() => {
-      res.status(500).send()
-    })
+    }
+    catch (err) {
+      res.status(500).send(err)
+    }
   }
 })
 
-app.delete('/hunters/:id', (req, res) => {
+clientApp.delete('/hunters/:id', async (req, res) => {
   if (!req.params.id) {
     res.status(400).send()
   }
   else {
-    Client.findByIdAndDelete(req.params.id)
-    .then((client) => {
+    try {
+      const client = await Client.findByIdAndDelete(req.params.id)
       if (!client) {
         res.status(400).send({
           error: `Client wiht ID ${req.params.id} not found`
@@ -171,17 +178,13 @@ app.delete('/hunters/:id', (req, res) => {
       else {
         res.status(200).send()
       }
-    })
-    .catch(() => {
-      res.status(500).send()
-    })
+    }
+    catch(err) {
+      res.status(500).send(err)
+    }
   }
 })
 
-app.all('/{*splat}', (_, res) => {
+clientApp.all('/{*splat}', (_, res) => {
   res.status(501).send()
-})
-
-app.listen(port, () => {
-  console.log(`Listening on port ${port}`)
 })
