@@ -58,6 +58,11 @@ export interface Asset extends Document {
    * Type of asset, based on {@link AssetType}.
    */
   type: AssetType;
+
+  /**
+   * Cantidad  de objetos
+   */
+  amount?: number;
 }
 
 const AssetSchema = new Schema<Asset>({
@@ -112,7 +117,12 @@ const AssetSchema = new Schema<Asset>({
         throw new Error(`Invalid asset type: ${value}`);
       }
     }
+  },
+  amount: {
+    type: Number,
+    trim: true,
+    required: false // Indicating that this field is not mandatory
   }
-})
+});
 
 export const AssetModel = assetsDB.model<Asset>('AssetModel', AssetSchema)
