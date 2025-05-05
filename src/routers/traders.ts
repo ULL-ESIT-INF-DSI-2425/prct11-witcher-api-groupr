@@ -1,13 +1,9 @@
 import express from 'express';
 import '../db/mongoose.js';
-import { TraderModel } from '../models/mercaderes.js';
+import { TraderModel } from '../models/traders.js';
 
 
-const tradersRouter = express();
-const port = process.env.PORT || 3000
-
-tradersRouter.use(express.json())
-
+export const tradersRouter = express();
 
 tradersRouter.post('/traders', (req, res) => {
   const trader = new TraderModel(req.body)
@@ -31,7 +27,7 @@ tradersRouter.get('/traders', (req, res) => {
       res.status(200).send(traders)
     }
   }).catch((err) => {
-    res.status(500).send({
+    res.status(400).send({
       error: err
     });
   });
@@ -42,10 +38,10 @@ tradersRouter.get('/traders/:id', (req, res) => {
     if (!trader) {
       res.status(404).send();
     } else {
-      res.send(trader);
+      res.status(200).send(trader);
     }
   }).catch(() => {
-    res.status(500).send();
+    res.status(400).send();
   });
 });
 
@@ -68,14 +64,14 @@ tradersRouter.patch('/traders', (req, res) => {
         error: 'Update is not permitted or has invalid types',
       });
     } else {
-      TraderModel.findOneAndUpdate({name: req.query.name.toString()}, req.body, {
+      TraderModel.findOneAndUpdate({name: req.query.name}, req.body, {
         new: true,
         runValidators: true,
       }).then((trader) => {
         if (!trader) {
           res.status(404).send();
         } else {
-          res.send(trader);
+          res.status(200).send(trader);
         }
       }).catch((error) => {
         res.status(400).send(error);
@@ -107,7 +103,7 @@ tradersRouter.patch('/traders/:id', (req, res) => {
         if (!trader) {
           res.status(404).send();
         } else {
-          res.send(trader);
+          res.status(200).send(trader);
         }
       }).catch((error) => {
         res.status(400).send(error);
@@ -122,11 +118,11 @@ tradersRouter.delete('/traders', (req, res) => {
       error: 'A name must be provided',
     });
   } else {
-    TraderModel.findOneAndDelete({title: req.query.name.toString()}).then((trader) => {
+    TraderModel.findOneAndDelete({name: req.query.name}).then((trader) => {
       if (!trader) {
         res.status(404).send();
       } else {
-        res.send(trader);
+        res.status(200).send(trader);
       }
     }).catch(() => {
       res.status(400).send();
@@ -139,7 +135,7 @@ tradersRouter.delete('/traders/:id', (req, res) => {
     if (!trader) {
       res.status(404).send();
     } else {
-      res.send(trader);
+      res.status(200).send(trader);
     }
   }).catch(() => {
     res.status(400).send();
@@ -149,8 +145,4 @@ tradersRouter.delete('/traders/:id', (req, res) => {
 
 tradersRouter.all('/{*splat}', (_, res) => {
   res.status(501).send()
-})
-
-tradersRouter.listen(port, () => {
-  console.log(`Listening on port ${port}`)
 })

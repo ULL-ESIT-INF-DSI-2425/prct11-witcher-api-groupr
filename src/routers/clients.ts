@@ -1,13 +1,13 @@
 import express from 'express';
-import './db/mongoose.js';
-import { Client } from './models/client.js';
+import '../db/mongoose.js';
+import { Client } from '../models/client.js';
 
-export const clientApp = express.Router()
+export const clientRouter = express.Router()
 
-clientApp.use(express.json())
+clientRouter.use(express.json())
 
 // Post requests
-clientApp.post('/hunters', async (req, res) => {
+clientRouter.post('/hunters', async (req, res) => {
   if (!req.body) {
     res.status(400).send('Hunter`s characteristics must be given on the body')
   }
@@ -27,7 +27,7 @@ clientApp.post('/hunters', async (req, res) => {
 
 //Modifying requests
 
-clientApp.patch('/hunters', async (req, res) => {
+clientRouter.patch('/hunters', async (req, res) => {
   if (!req.query.id) {
     res.status(400).send({
       error: 'An ID must be given on query'
@@ -69,7 +69,7 @@ clientApp.patch('/hunters', async (req, res) => {
   }
 })
 
-clientApp.patch('/hunters/:id', async (req, res) => {
+clientRouter.patch('/hunters/:id', async (req, res) => {
   if (!req.body) {
     res.status(400).send({
       error: 'Body not ptovided'
@@ -107,7 +107,7 @@ clientApp.patch('/hunters/:id', async (req, res) => {
 })
 
 //Reading requests
-clientApp.get('/hunters', async (req, res) => {
+clientRouter.get('/hunters', async (req, res) => {
   const filter = req.query.id? {id: Number(req.query.id)} : {}
   try {
     const clients = await Client.find(filter)
@@ -123,7 +123,7 @@ clientApp.get('/hunters', async (req, res) => {
   }
 })
 
-clientApp.get('/hunters/:id', async (req, res) => {
+clientRouter.get('/hunters/:id', async (req, res) => {
   try {
     const client = await Client.findById(req.params.id)
     if (!client) {
@@ -141,7 +141,7 @@ clientApp.get('/hunters/:id', async (req, res) => {
 })
 
 //Deleting requests
-clientApp.delete('/hunters', async (req, res) => {
+clientRouter.delete('/hunters', async (req, res) => {
   if (!req.query.id) {
     res.status(400).send({
       error: 'An id must be provided on query'
@@ -163,7 +163,7 @@ clientApp.delete('/hunters', async (req, res) => {
   }
 })
 
-clientApp.delete('/hunters/:id', async (req, res) => {
+clientRouter.delete('/hunters/:id', async (req, res) => {
   if (!req.params.id) {
     res.status(400).send()
   }
@@ -185,6 +185,6 @@ clientApp.delete('/hunters/:id', async (req, res) => {
   }
 })
 
-clientApp.all('/{*splat}', (_, res) => {
+clientRouter.all('/{*splat}', (_, res) => {
   res.status(501).send()
 })
