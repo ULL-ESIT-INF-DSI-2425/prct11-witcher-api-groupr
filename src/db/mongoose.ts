@@ -7,7 +7,10 @@ export const clientsDB = mongoose.createConnection('mongodb://127.0.0.1:27017/cl
 
 export const tradersDB = mongoose.createConnection('mongodb://127.0.0.1:27017/traders');
 
+export const transactionsDB = mongoose.createConnection('mongodb://127.0.0.1:27017/transactions')
+
 // Manejo de eventos de conexión
 assetsDB.on('connected', () => console.log('Connected to assets database'));
 clientsDB.on('connected', () => console.log('Connected to clients database'));
 tradersDB.on('connected', () => console.log('Connected to traders database'));
+transactionsDB.on('connected', () => console.log('Conected to transactions database'))

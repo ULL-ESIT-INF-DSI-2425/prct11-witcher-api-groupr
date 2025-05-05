@@ -3,7 +3,7 @@ import { clientsDB } from '../db/mongoose.js';
 
 export enum Race {
   WITCH = "WITCH", 
-  KNIGHT = "KNIGHT", // Corregí "KNIGTH" a "KNIGHT"
+  KNIGHT = "KNIGHT", 
   NOBLE = "NOBLE",
   BANDIT = "BANDIT", 
   MERCENARY = 'MERCENARY', 
@@ -11,18 +11,12 @@ export enum Race {
 }
 
 export interface ClientDocumentInterface extends Document {
-  id: number;
   name: string; 
   race: Race;
   location: string;
 }
 
 export const ClientSchema = new Schema<ClientDocumentInterface>({
-  id: {
-    type: Number,
-    unique: true,
-    required: true,
-  },
   name: {
     type: String,
     required: true,
