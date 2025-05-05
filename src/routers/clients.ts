@@ -1,13 +1,13 @@
 import express from 'express';
-import '../db/mongoose.js';
+import './db/mongoose.js';
 import { Client } from '../models/client.js';
 
-export const clientRouter = express.Router()
+export const clientApp = express.Router()
 
-clientRouter.use(express.json())
+clientApp.use(express.json())
 
 // Post requests
-clientRouter.post('/hunters', async (req, res) => {
+clientApp.post('/hunters', async (req, res) => {
   if (!req.body) {
     res.status(400).send('Hunter`s characteristics must be given on the body')
   }
@@ -27,10 +27,10 @@ clientRouter.post('/hunters', async (req, res) => {
 
 //Modifying requests
 
-clientRouter.patch('/hunters', async (req, res) => {
-  if (!req.query.id) {
+clientApp.patch('/hunters', async (req, res) => {
+  if (!req.query.name) {
     res.status(400).send({
-      error: 'An ID must be given on query'
+      error: 'A Name must be given on query'
     })
   }
   else if (!req.body) {
@@ -39,7 +39,7 @@ clientRouter.patch('/hunters', async (req, res) => {
     })
   }
   else {
-    const allowedChanges = ['id', 'name', 'race', 'location']
+    const allowedChanges = ['name', 'race', 'location']
     const actualChanges = Object.keys(req.body)
     const validUpdate = actualChanges.every((value) => allowedChanges.includes(value))
     if (!validUpdate) {
@@ -49,7 +49,7 @@ clientRouter.patch('/hunters', async (req, res) => {
     }
     else {
       try {
-        const client = await Client.findOneAndUpdate({id: Number(req.query.id)}, req.body, {
+        const client = await Client.findOneAndUpdate(req.body, {
           new: true,
           runValidators: true
         })
@@ -69,7 +69,7 @@ clientRouter.patch('/hunters', async (req, res) => {
   }
 })
 
-clientRouter.patch('/hunters/:id', async (req, res) => {
+clientApp.patch('/hunters/:id', async (req, res) => {
   if (!req.body) {
     res.status(400).send({
       error: 'Body not ptovided'
@@ -107,8 +107,8 @@ clientRouter.patch('/hunters/:id', async (req, res) => {
 })
 
 //Reading requests
-clientRouter.get('/hunters', async (req, res) => {
-  const filter = req.query.id? {id: Number(req.query.id)} : {}
+clientApp.get('/hunters', async (req, res) => {
+  const filter = req.query.name? {name: req.query.name} : {}
   try {
     const clients = await Client.find(filter)
     if (clients.length === 0) {
@@ -123,7 +123,7 @@ clientRouter.get('/hunters', async (req, res) => {
   }
 })
 
-clientRouter.get('/hunters/:id', async (req, res) => {
+clientApp.get('/hunters/:id', async (req, res) => {
   try {
     const client = await Client.findById(req.params.id)
     if (!client) {
@@ -141,15 +141,15 @@ clientRouter.get('/hunters/:id', async (req, res) => {
 })
 
 //Deleting requests
-clientRouter.delete('/hunters', async (req, res) => {
-  if (!req.query.id) {
+clientApp.delete('/hunters', async (req, res) => {
+  if (!req.query.name) {
     res.status(400).send({
-      error: 'An id must be provided on query'
+      error: 'A name must be provided on query'
     })
   }
   else {
     try {
-      const client = await Client.findOneAndDelete({id: Number(req.query.id)})
+      const client = await Client.findOneAndDelete({name: req.query.name})
       if (!client) {
         res.status(404).send()
       }
@@ -163,7 +163,7 @@ clientRouter.delete('/hunters', async (req, res) => {
   }
 })
 
-clientRouter.delete('/hunters/:id', async (req, res) => {
+clientApp.delete('/hunters/:id', async (req, res) => {
   if (!req.params.id) {
     res.status(400).send()
   }
@@ -185,6 +185,6 @@ clientRouter.delete('/hunters/:id', async (req, res) => {
   }
 })
 
-clientRouter.all('/{*splat}', (_, res) => {
+clientApp.all('/{*splat}', (_, res) => {
   res.status(501).send()
 })
