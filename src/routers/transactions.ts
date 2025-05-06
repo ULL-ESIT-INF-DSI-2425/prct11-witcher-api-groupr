@@ -2,7 +2,7 @@ import express from 'express';
 import '../db/mongoose.js';
 import { Transaction, TransactionDocumentInterface } from '../models/transaction.js';
 import { TraderModel } from '../models/traders.js';
-import { AssetModel } from '../models/asset.js';
+import { AssetModel, Asset } from '../models/asset.js';
 
 export const transactionApp = express.Router()
 
@@ -112,42 +112,39 @@ export const checkDB = (transaction: TransactionDocumentInterface): Promise<bool
       reject('Error: a trader and a colection of assets must be provided')
     }
     else {
-      // const filter = {name: transaction.mercader.name}
+      const filter = {name: transaction.mercader.name}
       try {
         //comprobamos la existencia del mercader
-        const trader = await TraderModel.findById(transaction.mercader)
-        if (!trader) {
+        const trader = await TraderModel.find(filter)
+        if (trader.length === 0) {
           reject('Error: trader not registered')
         }
         else {
           //comprobamos la existencia de los bienes
-          if (transaction.innBuying) {
-            //Si los esta comprando la posada no hace falta comprobar que existan
-            resolve(true)
-          }
-          else { // en caso de estar vendiendo
-            //Comprobamos que no se repita el mismo bien 2 veces
-            let bienes: string[] = []
-            transaction.bienes.forEach(bien => {
-              if (!bienes.includes(bien.name)) {
-                bienes.push(bien.name)
+          //y que no se haya indicado el mismo dos veces
+          let bienes: string[] = []
+          transaction.bienes.forEach(async bien => {
+            const searchedAsset = await AssetModel.findById(bien.asset)
+            if (!searchedAsset) { // Si el asset no existe
+              reject(`Error: Asset with ID ${bien.asset} not found`)
+            }
+            else {
+              if (!bienes.includes(searchedAsset.name)) {
+                bienes.push(searchedAsset.name)
               }
-              else {
+              else { //Si el asset esta duplicado
                 reject('Error: duplicated assets')
               }
-            })
-            //Ahora debemos comprobar que existan todos los bienes y comprobar que haya la cantidad necesaria
-            transaction.bienes.forEach(async bien => {
-              const searchedAsset = await AssetModel.find({name: bien.name})
-              if (searchedAsset.length === 0) {
-                reject('The asset was not found')
-              }
-              else if (searchedAsset[0].amount < bien.amount) {
-                reject(`There isn't sufficient amount of ${bien.name}`)
-              }
-            })
-            resolve(true)
-          }
+            }
+          })
+          //Ahora debemos comprobar que haya la cantidad necesaria de cada asset
+          transaction.bienes.forEach(async bien => {
+            const searchedAsset = await AssetModel.findById(bien.asset) as Asset //ya verificamos que todos los asset existen
+            if (searchedAsset.amount < Number(bien.amount)) { 
+              reject(`There isn't sufficient amount of ${searchedAsset.name}`)
+            }
+          })
+          resolve(true)
         }
       }
       catch(err) {
@@ -159,36 +156,28 @@ export const checkDB = (transaction: TransactionDocumentInterface): Promise<bool
 
 export const updateStock = (transaction: TransactionDocumentInterface, reverse?: boolean): Promise<boolean> => {
   return new Promise<boolean>(async(resolve, reject) => {
-    if (reverse)
+    if (reverse) //en caso de eliminar una transacción la operación se invierte
       transaction.innBuying = !transaction.innBuying
     try {
       //Si la posada está comprando, hay que añadir el bien o actualizar el stock
       if (transaction.innBuying) {
         transaction.bienes.forEach(async bien => {
-          const searchedAsset = await AssetModel.find({name: bien.name})
-          if (searchedAsset.length === 0) {
-            const asset = new AssetModel(bien)
-            await asset.save()
-            resolve(true)
+          const searchedAsset = await AssetModel.findById(bien.asset)
+          if (!searchedAsset) {  //añadir 
+            reject(`Asset with ID ${bien.asset} not found`)
           }
           else {
-            const searchedAsset = await AssetModel.find({name: bien.name})
-            const newAmount = searchedAsset[0].amount + bien.amount
-            await AssetModel.findOneAndUpdate({name: bien.name}, {amount: newAmount})
+            const newAmount = searchedAsset.amount + Number(bien.amount)
+            await AssetModel.findOneAndUpdate({name: searchedAsset.name}, {amount: newAmount})
           }
         })
       }
       else {
         //Reducir la cantidad del bien o eliminarlo por completo si llega a 0
         transaction.bienes.forEach(async bien => {
-          const searchedAsset = await AssetModel.find({name: bien.name})
-          const newAmount = searchedAsset[0].amount - bien.amount
-          if (newAmount > 0) { //actualizar cantidad
-            AssetModel.findOneAndUpdate({name: bien.name}, {amount: newAmount})
-          }
-          else {  //eliminar el bien
-            AssetModel.findOneAndDelete({name: bien.name})
-          }
+          const searchedAsset = await AssetModel.findById(bien.asset) as Asset // Si se esta eliminando implica que ya se ha registrado 
+          const newAmount = searchedAsset.amount - Number(bien.amount)
+          await AssetModel.findByIdAndUpdate({amount: newAmount})
           resolve(true)
         })
       }
