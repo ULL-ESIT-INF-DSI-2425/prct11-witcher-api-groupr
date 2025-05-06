@@ -1,5 +1,5 @@
 import { Document, Schema } from 'mongoose';
-import { clientsDB } from '../db/mongoose.js';
+import { huntersDB } from '../db/mongoose.js';
 
 export enum Race {
   WITCH = "WITCH", 
@@ -10,13 +10,13 @@ export enum Race {
   VILLAGER = "VILLAGER"
 }
 
-export interface ClientDocumentInterface extends Document {
+export interface HunterDocumentInterface extends Document {
   name: string; 
   race: Race;
   location: string;
 }
 
-export const ClientSchema = new Schema<ClientDocumentInterface>({
+export const HunterSchema = new Schema<HunterDocumentInterface>({
   name: {
     type: String,
     required: true,
@@ -34,5 +34,5 @@ export const ClientSchema = new Schema<ClientDocumentInterface>({
   }
 });
 
-export const Client = clientsDB.model<ClientDocumentInterface>('Client', ClientSchema)
+export const Hunter = huntersDB.model<HunterDocumentInterface>('Hunter', HunterSchema)
 

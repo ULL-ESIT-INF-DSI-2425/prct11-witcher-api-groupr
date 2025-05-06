@@ -1,5 +1,5 @@
 import express from 'express';
-import './db/mongoose.js';
+import '../db/mongoose.js';
 import { Transaction } from '../models/transaction.js';
 
 export const transactionApp = express.Router()

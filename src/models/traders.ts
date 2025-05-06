@@ -21,8 +21,6 @@ export enum TraderTypes {
  * Interface representing a trader.
  */
 export interface Trader extends Document {
-  /** Unique identifier for the trader. */
-  id: number;
   /** Name of the trader. */
   name: string;
   /** Type of trader, based on the {@link TraderTypes} enum. */
@@ -32,14 +30,8 @@ export interface Trader extends Document {
 }
 
 const TraderSchema = new Schema<Trader>({
-  id: {
-    unique: true,
-    type: Number,
-    required: true,
-    trim: true,
-    //validar si el id existe
-  },
   name: {
+    unique: true,
     type: String,
     required: true,
     trim: true,
