@@ -58,7 +58,7 @@ export interface Asset extends Document {
   /**
    * Cantidad  de objetos
    */
-  amount?: number;
+  amount: number;
 }
 
 const AssetSchema = new Schema<Asset>({
@@ -110,7 +110,7 @@ const AssetSchema = new Schema<Asset>({
   amount: {
     type: Number,
     trim: true,
-    required: false // Indicating that this field is not mandatory
+    required: true // Indicating that this field is not mandatory
   }
 });
 

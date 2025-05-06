@@ -17,13 +17,7 @@ export const TransactionSquema = new Schema<TransactionDocumentInterface>({
   mercader: {
     type: Schema.Types.ObjectId,
     ref: 'TraderModel',
-    required: true,
-    validate: async (trader: Trader) => {
-      const searchedTrader = await TraderModel.findById(trader._id)
-      if (!searchedTrader) {
-        throw new Error('The trader must be registered on the database')
-      }
-    }
+    required: true
   },
   bienes: {
     required: true,
