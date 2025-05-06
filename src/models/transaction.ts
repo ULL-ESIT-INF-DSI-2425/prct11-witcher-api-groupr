@@ -2,16 +2,20 @@ import {Document,  Schema} from 'mongoose'
 import { transactionsDB } from '../db/mongoose.js'
 import { Trader, TraderModel} from './traders.js'
 import { Asset , AssetModel} from './asset.js'
+import {Types} from 'mongoose'
 
 export interface TransactionDocumentInterface extends Document {
   mercader: Trader,
-  bienes: Asset[],
+  bienes: Bien[],
   date: Date,
   crownValue: number,
   innBuying?: boolean
 }
 
-export type bienes = [Asset, Number][]
+export interface Bien {
+  asset: Types.ObjectId,
+  amount: Number
+}
 
 export const TransactionSquema = new Schema<TransactionDocumentInterface>({
   mercader: {
@@ -22,14 +26,20 @@ export const TransactionSquema = new Schema<TransactionDocumentInterface>({
   bienes: {
     required: true,
     type: [{
-      type: Schema.Types.ObjectId,
-      ref: 'AssetModel'
+      asset: {
+        type: Schema.Types.ObjectId,
+        ref: 'AssetModel',
+        required: true
+      },
+      amount: {
+        type: Number,
+        required: true
+      }
     }],
     validate: (bienes: Asset[]) => {
       if (bienes.length <= 0) {
         throw new Error('There must be at least 1 asset involved')
       }
-      
     }
   },
   date: {
