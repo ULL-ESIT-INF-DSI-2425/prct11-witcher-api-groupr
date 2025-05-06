@@ -185,6 +185,6 @@ hunterApp.delete('/hunters/:id', async (req, res) => {
   }
 })
 
-hunterApp.all('/{*splat}', (_, res) => {
+hunterApp.all('/hunters/{*splat}', (_, res) => {
   res.status(501).send()
 })

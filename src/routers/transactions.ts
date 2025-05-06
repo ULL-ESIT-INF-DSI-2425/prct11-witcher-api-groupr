@@ -80,12 +80,30 @@ transactionApp.post('/transactions', async(req, res) => {
   }
 })
 
-transactionApp.patch('/transactions', async(req, res) => {
+transactionApp.patch('/transactions/:id', async(req, res) => {
 
 })
 
-transactionApp.delete('/transactions', async(req, res) => {
-
+transactionApp.delete('/transactions/:id', async(req, res) => {
+  if (!req.query.id) {
+    res.status(400).send('Error: a transaction id must be provided')
+  }
+  else {
+    try {
+      const transaction = await Transaction.findByIdAndDelete(req.query.id)
+      if (!transaction) {
+        res.status(404).send(`Transaction with id ${req.query.id} not found`)
+      }
+      else {
+        //actualizamos el stock de los bienes
+        updateStock(transaction)
+        res.status(200).send(transaction)
+      }
+    }
+    catch(err) {
+      res.status(500).send(err)
+    }
+  }
 })
 
 export const checkDB = (transaction: TransactionDocumentInterface): Promise<boolean> => {
@@ -94,11 +112,11 @@ export const checkDB = (transaction: TransactionDocumentInterface): Promise<bool
       reject('Error: a trader and a colection of assets must be provided')
     }
     else {
-      const filter = {name: transaction.mercader.name}
+      // const filter = {name: transaction.mercader.name}
       try {
         //comprobamos la existencia del mercader
-        const trader = await TraderModel.find(filter)
-        if (trader.length === 0) {
+        const trader = await TraderModel.findById(transaction.mercader)
+        if (!trader) {
           reject('Error: trader not registered')
         }
         else {
@@ -139,8 +157,10 @@ export const checkDB = (transaction: TransactionDocumentInterface): Promise<bool
   })
 }
 
-export const updateStock = (transaction: TransactionDocumentInterface): Promise<boolean> => {
+export const updateStock = (transaction: TransactionDocumentInterface, reverse?: boolean): Promise<boolean> => {
   return new Promise<boolean>(async(resolve, reject) => {
+    if (reverse)
+      transaction.innBuying = !transaction.innBuying
     try {
       //Si la posada está comprando, hay que añadir el bien o actualizar el stock
       if (transaction.innBuying) {
