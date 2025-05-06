@@ -49,7 +49,7 @@ hunterApp.patch('/hunters', async (req, res) => {
     }
     else {
       try {
-        const hunter = await Hunter.findOneAndUpdate(req.body, {
+        const hunter = await Hunter.findOneAndUpdate({ name: req.query.name }, req.body, {
           new: true,
           runValidators: true
         })
@@ -130,7 +130,7 @@ hunterApp.get('/hunters/:id', async (req, res) => {
       res.status(404).send()
     }
     else {
-      res.status(201).send(hunter)
+      res.status(200).send(hunter)
     }
   }
   catch(err) {
@@ -171,7 +171,7 @@ hunterApp.delete('/hunters/:id', async (req, res) => {
     try {
       const hunter = await Hunter.findByIdAndDelete(req.params.id)
       if (!hunter) {
-        res.status(400).send({
+        res.status(404).send({
           error: `Hunter wiht ID ${req.params.id} not found`
         })
       }

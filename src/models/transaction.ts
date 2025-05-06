@@ -1,7 +1,7 @@
 import {Document,  Schema} from 'mongoose'
 import { transactionsDB } from '../db/mongoose.js'
 import { Trader, TraderModel} from './traders.js'
-import { Asset , AssetModel} from './bienes.js'
+import { Asset , AssetModel} from './asset.js'
 
 export interface TransactionDocumentInterface extends Document {
   mercader: Trader,

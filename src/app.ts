@@ -2,7 +2,7 @@ import express from 'express';
 import './db/mongoose.js';
 import { tradersRouter } from './routers/traders.js';
 import { hunterApp } from './routers/hunters.js';
-import {Assetrouter} from './routers/server_assets.js'
+import {Assetrouter} from './routers/assets.js'
 import { transactionApp } from './routers/transactions.js';
 
 export const app = express();
