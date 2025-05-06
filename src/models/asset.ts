@@ -24,10 +24,6 @@ export enum AssetType {
  * Interface defining the structure of an asset.
  */
 export interface Asset extends Document {
-  /**
-   * Unique identifier for the asset.
-   */
-  id: number;
 
   /**
    * Name of the asset.
@@ -66,13 +62,6 @@ export interface Asset extends Document {
 }
 
 const AssetSchema = new Schema<Asset>({
-  id: {
-    unique: true,
-    type: Number,
-    required: true,
-    trim: true
-    // Validar que no exista el id
-  },
   name: {
     type: String,
     required: true,
