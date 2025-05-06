@@ -53,9 +53,23 @@ Assetrouter.post('/assets', async (req, res) => {
     res.status(400).send('Assets characteristics must be given on the body ')
   }
   try {
-    const asset = new AssetModel(req.body)
-    await asset.save()
-    res.status(201).send(asset)
+    //const asset = new AssetModel(req.body)
+    const filter = req.query.name ? { name: req.body.name } : {};
+    const asset = await AssetModel.find(filter)
+    if ( asset.length !== 0) {
+      const assetId = asset[0]._id;
+      // Aumento el el amount con el inc y devuelvo el nuevo valor con new
+      const updatedAsset = await AssetModel.findByIdAndUpdate(
+        assetId,
+        { $inc: { amount: req.body.amount } },
+        { new: true }
+      );
+      res.status(200).send(updatedAsset);
+    } else {
+      const newAsset = new AssetModel(req.body)
+      await newAsset.save()
+      res.status(201).send(newAsset)
+    }
   } catch (err) {
     res.status(500).send({error:err})
   }
