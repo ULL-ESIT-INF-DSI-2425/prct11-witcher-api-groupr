@@ -40,7 +40,12 @@ Assetrouter.get('/assets', async (req, res) => {
     }
 
     const assets = await AssetModel.find(filter);
-    res.status(200).send(assets);
+    if (!assets) {
+      res.status(404).send('Asset not found')
+    }
+    else {
+      res.status(200).send(assets);
+    }
   } catch (err) {
     res.status(500).send({ error: err });
   }

@@ -56,3 +56,20 @@ transactionApp.get('/transactions/:id', async(req, res) => {
     res.status(500).send(err)
   }
 })
+
+transactionApp.post('/transactions', async(req, res) => {
+  if (!req.body) {
+    res.status(400).send('Error: a body must be specified')
+  }
+  else {
+    
+  }
+})
+
+transactionApp.patch('/transactions', async(req, res) => {
+
+})
+
+transactionApp.delete('/transactions', async(req, res) => {
+
+})
