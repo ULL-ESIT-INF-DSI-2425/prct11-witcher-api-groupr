@@ -59,7 +59,7 @@ Assetrouter.post('/assets', async (req, res) => {
   }
   try {
     //const asset = new AssetModel(req.body)
-    console.log(req.body)
+    //console.log(req.body)
     const filter = req.body.name ? { name: req.body.name } : {};
     const asset = await AssetModel.find(filter)
     if ( asset.length !== 0) {
@@ -100,13 +100,13 @@ Assetrouter.delete('/assets/:id', async (req, res) => {
 })
 
 Assetrouter.delete('/assets', async (req, res) => {
-  if(!req.body) {
+  if(!req.params) {
     res.status(400).send()
   }
   try {
     const allowedFields = [ 'name', 'description', 'weight', 'material', 'crown_value', 'amount'];
     const filter: any = {};
-  
+    //console.log(req.params)
     for (const field of allowedFields) {
       if (req.query[field] !== undefined) {
         // Convertir números que vienen como string
@@ -117,7 +117,7 @@ Assetrouter.delete('/assets', async (req, res) => {
         }
       }
     }
-
+    //console.log(filter)
     const assets = await AssetModel.findOneAndDelete(filter, req.body);
     if (!assets) {
       res.status(404).send('Asset not found')
