@@ -104,7 +104,7 @@ transactionApp.delete('/transactions/:id', async(req, res) => {
       }
       else {
         //actualizamos el stock de los bienes
-        // updateStock(transaction)
+        updateStock(transaction, true)
         res.status(200).send(transaction)
       }
     }
@@ -164,11 +164,12 @@ export const checkDB = (transaction: TransactionDocumentInterface): Promise<bool
 
 export const updateStock = (transaction: TransactionDocumentInterface, reverse?: boolean): Promise<boolean> => {
   return new Promise<boolean>(async(resolve, reject) => {
+    let operation = transaction.innBuying
     if (reverse) //en caso de eliminar una transacción la operación se invierte
-      transaction.innBuying = !transaction.innBuying
+      operation = !transaction.innBuying
     try {
       //Si la posada está comprando, hay que añadir el bien o actualizar el stock
-      if (transaction.innBuying) {
+      if (operation) {
         transaction.bienes.forEach(async bien => {
           const searchedAsset = await AssetModel.findById(bien.asset)
           if (!searchedAsset) {  //añadir 
