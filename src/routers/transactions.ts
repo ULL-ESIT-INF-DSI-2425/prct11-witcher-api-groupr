@@ -2,6 +2,7 @@ import express from 'express';
 import '../db/mongoose.js';
 import { Transaction, TransactionDocumentInterface } from '../models/transaction.js';
 import { TraderModel } from '../models/traders.js';
+import { Hunter } from '../models/hunters.js';
 import { AssetModel, Asset } from '../models/asset.js';
 
 export const transactionApp = express.Router()
@@ -66,13 +67,20 @@ transactionApp.post('/transactions', async(req, res) => {
   else {
     try {
       // comrpobar que los bienes y mercaderes existan
-      await checkDB(req.body)
-      let  transaction = new Transaction(req.body)
-      //registramos la transación
-      transaction = await transaction.save()
-      //actualizamos el stock disponible de cada bien
-      await updateStock(req.body)
-      res.status(201).send(transaction)
+      const check = await checkDB(req.body)
+      if (check) {
+        let transaction = new Transaction(req.body)
+        //registramos la transación
+        transaction = await transaction.save()
+        // //actualizamos el stock disponible de cada bien
+        const update = await updateStock(req.body)
+        if (!update) {
+          res.status(500).send('Error: stock not updated')
+        }
+        res.status(201).send(transaction)
+      } else {
+        res.status(400).send('Error: a trader and a colection of assets must be provided')
+      }
     }
     catch(err) {
       res.status(500).send(err)
@@ -85,18 +93,18 @@ transactionApp.patch('/transactions/:id', async(req, res) => {
 })
 
 transactionApp.delete('/transactions/:id', async(req, res) => {
-  if (!req.query.id) {
+  if (!req.params.id) {
     res.status(400).send('Error: a transaction id must be provided')
   }
   else {
     try {
-      const transaction = await Transaction.findByIdAndDelete(req.query.id)
+      const transaction = await Transaction.findByIdAndDelete(req.params.id)
       if (!transaction) {
-        res.status(404).send(`Transaction with id ${req.query.id} not found`)
+        res.status(404).send(`Transaction with id ${req.params.id} not found`)
       }
       else {
         //actualizamos el stock de los bienes
-        updateStock(transaction)
+        // updateStock(transaction)
         res.status(200).send(transaction)
       }
     }
@@ -104,6 +112,7 @@ transactionApp.delete('/transactions/:id', async(req, res) => {
       res.status(500).send(err)
     }
   }
+
 })
 
 export const checkDB = (transaction: TransactionDocumentInterface): Promise<boolean> => {
@@ -111,41 +120,40 @@ export const checkDB = (transaction: TransactionDocumentInterface): Promise<bool
     if (!transaction.mercader || !transaction.bienes) {
       reject('Error: a trader and a colection of assets must be provided')
     }
-    else {
-      const filter = {name: transaction.mercader.name}
+    else { 
       try {
-        //comprobamos la existencia del mercader
-        const trader = await TraderModel.find(filter)
-        if (trader.length === 0) {
-          reject('Error: trader not registered')
+        if (transaction.innBuying) {
+          //comprobamos la existencia del mercader
+          const trader = await TraderModel.findById(transaction.mercader)
+          if (!trader) {
+            reject('Error: trader not registered')
+          }
+        } else {
+          //comprobamos la existencia del mercader
+          const hunter = await Hunter.findById(transaction.mercader)
+          if (!hunter) {
+            reject('Error: hunter not registered')
+          }
         }
-        else {
-          //comprobamos la existencia de los bienes
-          //y que no se haya indicado el mismo dos veces
-          let bienes: string[] = []
-          transaction.bienes.forEach(async bien => {
-            const searchedAsset = await AssetModel.findById(bien.asset)
-            if (!searchedAsset) { // Si el asset no existe
-              reject(`Error: Asset with ID ${bien.asset} not found`)
+        //comprobamos la existencia de los bienes
+        //y que no se haya indicado el mismo dos veces
+        let bienes: string[] = []
+        transaction.bienes.forEach(async bien => {
+          const searchedAsset = await AssetModel.findById(bien.asset)
+          if (!searchedAsset) { // Si el asset no existe
+            reject(`Error: Asset with ID ${bien.asset} not found`)
+          }
+          else {
+            if (!bienes.includes(searchedAsset.name)) {
+              bienes.push(searchedAsset.name)
             }
-            else {
-              if (!bienes.includes(searchedAsset.name)) {
-                bienes.push(searchedAsset.name)
-              }
-              else { //Si el asset esta duplicado
-                reject('Error: duplicated assets')
-              }
+            else { //Si el asset esta duplicado
+              reject('Error: duplicated assets')
             }
-          })
-          //Ahora debemos comprobar que haya la cantidad necesaria de cada asset
-          transaction.bienes.forEach(async bien => {
-            const searchedAsset = await AssetModel.findById(bien.asset) as Asset //ya verificamos que todos los asset existen
-            if (searchedAsset.amount < Number(bien.amount)) { 
-              reject(`There isn't sufficient amount of ${searchedAsset.name}`)
-            }
-          })
-          resolve(true)
-        }
+          }
+        })
+        resolve(true)
+
       }
       catch(err) {
         reject(err)
@@ -169,16 +177,26 @@ export const updateStock = (transaction: TransactionDocumentInterface, reverse?:
           else {
             const newAmount = searchedAsset.amount + Number(bien.amount)
             await AssetModel.findOneAndUpdate({name: searchedAsset.name}, {amount: newAmount})
+            resolve(true)
           }
         })
       }
       else {
         //Reducir la cantidad del bien o eliminarlo por completo si llega a 0
         transaction.bienes.forEach(async bien => {
-          const searchedAsset = await AssetModel.findById(bien.asset) as Asset // Si se esta eliminando implica que ya se ha registrado 
-          const newAmount = searchedAsset.amount - Number(bien.amount)
-          await AssetModel.findByIdAndUpdate({amount: newAmount})
-          resolve(true)
+          const searchedAsset = await AssetModel.findById(bien.asset)
+          if (!searchedAsset) {  //añadir 
+            reject(`Asset with ID ${bien.asset} not found`)
+          }
+          else {
+            const newAmount = searchedAsset.amount - Number(bien.amount)
+            if (newAmount < 0) {
+              reject(`Error: not enough ${searchedAsset.name} in stock`)
+            } else {
+              await AssetModel.findOneAndUpdate({name: searchedAsset.name}, {amount: newAmount})
+              resolve(true)
+            }
+          }
         })
       }
     }
