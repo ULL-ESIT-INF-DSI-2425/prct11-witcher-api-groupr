@@ -5,7 +5,7 @@ import { Asset , AssetModel} from './asset.js'
 import {Types} from 'mongoose'
 
 export interface TransactionDocumentInterface extends Document {
-  mercader: Trader,
+  mercader: string,
   bienes: Bien[],
   date: Date,
   crownValue: number,
@@ -13,13 +13,13 @@ export interface TransactionDocumentInterface extends Document {
 }
 
 export interface Bien {
-  asset: Types.ObjectId,
+  asset: string,
   amount: Number
 }
 
 export const TransactionSquema = new Schema<TransactionDocumentInterface>({
   mercader: {
-    type: Schema.Types.ObjectId,
+    type: String,
     ref: 'TraderModel',
     required: true
   },
@@ -27,7 +27,7 @@ export const TransactionSquema = new Schema<TransactionDocumentInterface>({
     required: true,
     type: [{
       asset: {
-        type: Schema.Types.ObjectId,
+        type: String,
         ref: 'AssetModel',
         required: true
       },

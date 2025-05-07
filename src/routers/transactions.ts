@@ -15,7 +15,7 @@ transactionApp.get('/transactions', async (req, res) => {
   }
   else if (req.query.name) {
     try {
-      const transaction = await Transaction.find({name: req.query.name})
+      const transaction = await Transaction.find({mercader: req.query.name})
       if (!transaction) {
         res.status(404).send(`Trader wiht name ${req.query.name} not found`)
       }
@@ -124,13 +124,13 @@ export const checkDB = (transaction: TransactionDocumentInterface): Promise<bool
       try {
         if (transaction.innBuying) {
           //comprobamos la existencia del mercader
-          const trader = await TraderModel.findById(transaction.mercader)
+          const trader = await TraderModel.find({name: transaction.mercader})
           if (!trader) {
             reject('Error: trader not registered')
           }
         } else {
           //comprobamos la existencia del mercader
-          const hunter = await Hunter.findById(transaction.mercader)
+          const hunter = await Hunter.find({name: transaction.mercader})
           if (!hunter) {
             reject('Error: hunter not registered')
           }
@@ -139,13 +139,13 @@ export const checkDB = (transaction: TransactionDocumentInterface): Promise<bool
         //y que no se haya indicado el mismo dos veces
         let bienes: string[] = []
         transaction.bienes.forEach(async bien => {
-          const searchedAsset = await AssetModel.findById(bien.asset)
+          const searchedAsset = await AssetModel.find({name: bien.asset})
           if (!searchedAsset) { // Si el asset no existe
-            reject(`Error: Asset with ID ${bien.asset} not found`)
+            reject(`Error: Asset with name ${bien.asset} not found`)
           }
           else {
-            if (!bienes.includes(searchedAsset.name)) {
-              bienes.push(searchedAsset.name)
+            if (!bienes.includes(searchedAsset[0].name)) { //Si el asset no está duplicado
+              bienes.push(searchedAsset[0].name)
             }
             else { //Si el asset esta duplicado
               reject('Error: duplicated assets')
@@ -171,13 +171,13 @@ export const updateStock = (transaction: TransactionDocumentInterface, reverse?:
       //Si la posada está comprando, hay que añadir el bien o actualizar el stock
       if (operation) {
         transaction.bienes.forEach(async bien => {
-          const searchedAsset = await AssetModel.findById(bien.asset)
-          if (!searchedAsset) {  //añadir 
-            reject(`Asset with ID ${bien.asset} not found`)
+          const searchedAsset = await AssetModel.find({name: bien.asset})
+          if (!searchedAsset) { 
+            reject(`Asset with name ${bien.asset} not found`)
           }
           else {
-            const newAmount = searchedAsset.amount + Number(bien.amount)
-            await AssetModel.findOneAndUpdate({name: searchedAsset.name}, {amount: newAmount})
+            const newAmount = searchedAsset[0].amount + Number(bien.amount)
+            await AssetModel.findOneAndUpdate({name: searchedAsset[0].name}, {amount: newAmount})
             resolve(true)
           }
         })
@@ -185,16 +185,16 @@ export const updateStock = (transaction: TransactionDocumentInterface, reverse?:
       else {
         //Reducir la cantidad del bien o eliminarlo por completo si llega a 0
         transaction.bienes.forEach(async bien => {
-          const searchedAsset = await AssetModel.findById(bien.asset)
+          const searchedAsset = await AssetModel.find({name: bien.asset})
           if (!searchedAsset) {  //añadir 
-            reject(`Asset with ID ${bien.asset} not found`)
+            reject(`Asset with name ${bien.asset} not found`)
           }
           else {
-            const newAmount = searchedAsset.amount - Number(bien.amount)
+            const newAmount = searchedAsset[0].amount - Number(bien.amount)
             if (newAmount < 0) {
-              reject(`Error: not enough ${searchedAsset.name} in stock`)
+              reject(`Error: not enough ${searchedAsset[0].name} in stock`)
             } else {
-              await AssetModel.findOneAndUpdate({name: searchedAsset.name}, {amount: newAmount})
+              await AssetModel.findOneAndUpdate({name: searchedAsset[0].name}, {amount: newAmount})
               resolve(true)
             }
           }
