@@ -59,7 +59,8 @@ Assetrouter.post('/assets', async (req, res) => {
   }
   try {
     //const asset = new AssetModel(req.body)
-    const filter = req.query.name ? { name: req.body.name } : {};
+    console.log(req.body)
+    const filter = req.body.name ? { name: req.body.name } : {};
     const asset = await AssetModel.find(filter)
     if ( asset.length !== 0) {
       const assetId = asset[0]._id;
@@ -91,9 +92,40 @@ Assetrouter.delete('/assets/:id', async (req, res) => {
     if(!assetModel) {
       res.status(400).send({error: `Asset with id ${req.params.id} not found`})
     } else {
-      res.status(200).send()
+      res.status(200).send(assetModel)
     }
   } catch(err) {
     res.status(500).send({error:err})
+  }
+})
+
+Assetrouter.delete('/assets', async (req, res) => {
+  if(!req.body) {
+    res.status(400).send()
+  }
+  try {
+    const allowedFields = [ 'name', 'description', 'weight', 'material', 'crown_value', 'amount'];
+    const filter: any = {};
+  
+    for (const field of allowedFields) {
+      if (req.query[field] !== undefined) {
+        // Convertir números que vienen como string
+        if (['weight', 'crown_value', 'amount'].includes(field)) {
+          filter[field] = Number(req.query[field]);
+        } else {
+          filter[field] = req.query[field];
+        }
+      }
+    }
+
+    const assets = await AssetModel.findOneAndDelete(filter, req.body);
+    if (!assets) {
+      res.status(404).send('Asset not found')
+    }
+    else {
+      res.status(200).send(assets);
+    }
+  } catch(error) {
+    res.status(500).send()
   }
 })

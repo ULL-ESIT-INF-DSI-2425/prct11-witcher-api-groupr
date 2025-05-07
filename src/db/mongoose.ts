@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 
+//mongodb/bin/mongod --dbpath mongodb-data/
 // Crear conexiones separadas para cada base de datos
 export const assetsDB = mongoose.createConnection('mongodb://127.0.0.1:27017/assets');
 
