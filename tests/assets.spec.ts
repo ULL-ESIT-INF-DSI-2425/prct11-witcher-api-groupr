@@ -349,3 +349,150 @@ describe("Delete with filters", async () => {
       .expect(404);
   });
 });
+
+// Patch with filters
+describe("Patch with filters", async () => {
+  test("Update an asset by filter", async () => {
+    await request(app)
+      .post("/assets")
+      .send({
+        name: "Golden ring",
+        description: "A precious golden ring.",
+        material: "Gold",
+        weight: 1,
+        crown_value: 5000,
+        type: "armor",
+        amount: 3
+      })
+      .expect(201);
+
+    const response = await request(app)
+      .patch("/assets?name=Golden ring")
+      .send({
+        description: "An updated description for the golden ring.",
+        crown_value: 6000
+      })
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      name: "Golden ring",
+      description: "An updated description for the golden ring.",
+      material: "Gold",
+      weight: 1,
+      crown_value: 6000,
+      type: "armor",
+      amount: 3
+    });
+  });
+
+  test("Fail to update an asset with invalid field", async () => {
+    await request(app)
+      .post("/assets")
+      .send({
+        name: "Golden ring",
+        description: "A precious golden ring.",
+        material: "Gold",
+        weight: 1,
+        crown_value: 5000,
+        type: "armor",
+        amount: 3
+      })
+      .expect(201);
+
+    await request(app)
+      .patch("/assets?name=Golden ring")
+      .send({
+        invalidField: "Invalid value"
+      })
+      .expect(400);
+  });
+
+  test("Fail to update an asset with non-matching filter", async () => {
+    await request(app)
+      .post("/assets")
+      .send({
+        name: "Golden ring",
+        description: "A precious golden ring.",
+        material: "Gold",
+        weight: 1,
+        crown_value: 5000,
+        type: "armor",
+        amount: 3
+      })
+      .expect(201);
+
+    await request(app)
+      .patch("/assets?name=Nonexistent")
+      .send({
+        description: "This update should fail."
+      })
+      .expect(404);
+  });
+});
+
+// Patch by ID
+describe("Patch by ID", async () => {
+  test("Update an existing asset by ID", async () => {
+    const asset = await request(app)
+      .post("/assets")
+      .send({
+        name: "Golden ring",
+        description: "A precious golden ring.",
+        material: "Gold",
+        weight: 1,
+        crown_value: 5000,
+        type: "armor",
+        amount: 3
+      })
+      .expect(201);
+
+    const response = await request(app)
+      .patch(`/assets/${asset.body._id}`)
+      .send({
+        description: "An updated description for the golden ring.",
+        crown_value: 6000
+      })
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      name: "Golden ring",
+      description: "An updated description for the golden ring.",
+      material: "Gold",
+      weight: 1,
+      crown_value: 6000,
+      type: "armor",
+      amount: 3
+    });
+  });
+
+  test("Fail to update an asset with invalid ID", async () => {
+    await request(app)
+      .patch("/assets/000000000000000000000000")
+      .send({
+        description: "This update should fail."
+      })
+      .expect(404);
+  });
+
+  test("Fail to update an asset with invalid field by ID", async () => {
+    const asset = await request(app)
+      .post("/assets")
+      .send({
+        name: "Golden ring",
+        description: "A precious golden ring.",
+        material: "Gold",
+        weight: 1,
+        crown_value: 5000,
+        type: "armor",
+        amount: 3
+      })
+      .expect(201);
+
+    await request(app)
+      .patch(`/assets/${asset.body._id}`)
+      .send({
+        invalidField: "Invalid value"
+      })
+      .expect(400);
+  });
+});

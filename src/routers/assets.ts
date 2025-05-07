@@ -129,3 +129,77 @@ Assetrouter.delete('/assets', async (req, res) => {
     res.status(500).send()
   }
 })
+
+Assetrouter.patch('/assets', async (req, res) => {
+  if (!req.params) {
+    res.status(400).send({
+      error: "params not found"
+    })
+  } else {
+    const allowedFields = [ 'name', 'description', 'weight', 'material', 'crown_value', 'amount', 'type'];
+    const filter: any = {};
+    const actualChanges = Object.keys(req.body)
+    const isValidChange = actualChanges.every((change) => {return allowedFields.includes(change)})
+    
+    if (!isValidChange) {
+      res.status(400).send({
+        error: 'Trying to modify a non allowed atribute'
+      })
+    }
+    for (const field of allowedFields) {
+      if (req.query[field] !== undefined) {
+        // Convertir números que vienen como string
+        if (['weight', 'crown_value', 'amount'].includes(field)) {
+          filter[field] = Number(req.query[field]);
+        } else {
+          filter[field] = req.query[field];
+        }
+      }
+    }
+    try {
+      const assets = await AssetModel.findOneAndUpdate(filter, req.body, {
+        new: true,
+        runValidators: true
+      })
+      if( !assets ) {
+        res.status(404).send()
+      } else {
+        res.status(200).send(assets)
+      }
+    }catch(err) {
+      res.status(500).send()
+    }
+  }
+
+});
+
+
+Assetrouter.patch('/assets/:id', async (req, res) => {
+  if(!req.params.id) {
+    res.status(400).send({error: "No id"})
+  } else {
+    const allowedFields = [ 'name', 'description', 'weight', 'material', 'crown_value', 'amount', 'type'];
+    const actualChanges = Object.keys(req.body)
+    const isValidChange = actualChanges.every((change) => {return allowedFields.includes(change)})
+    
+    if (!isValidChange) {
+      res.status(400).send({
+        error: 'Trying to modify a non allowed atribute'
+      })
+    }
+    try {
+      const asset = await AssetModel.findByIdAndUpdate(req.params.id, req.body, {
+        runValidators: true,
+        new: true
+      })
+      //console.log(asset)
+      if(!asset) {
+        res.status(404).send({ error: "Asset not found" })
+      } else {
+        res.status(200).send(asset)
+      }
+    } catch (error) {
+      res.status(500).send()
+    }
+  }
+})
