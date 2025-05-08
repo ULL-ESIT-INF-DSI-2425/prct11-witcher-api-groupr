@@ -2,9 +2,19 @@ import express from 'express';
 import '../db/mongoose.js';
 import { TraderModel } from '../models/traders.js';
 
-
+/**
+ * Express router for handling trader-related operations.
+ */
 export const tradersRouter = express.Router();
 
+
+/**
+ * @route POST /traders
+ * @summary Create a new trader
+ * @param req.body - Trader data (must match TraderModel schema)
+ * @returns 201 - Trader created successfully
+ * @returns 500 - Server error
+ */
 tradersRouter.post('/traders', async (req, res) => {
   const trader = new TraderModel(req.body)
   try {
@@ -15,6 +25,14 @@ tradersRouter.post('/traders', async (req, res) => {
   }
 })
 
+/**
+ * @route GET /traders
+ * @summary Get all traders or filter by name
+ * @param req.query.name - Optional name filter
+ * @returns 200 - List of traders
+ * @returns 404 - No traders found
+ * @returns 500 - Server error
+ */
 tradersRouter.get('/traders', async (req, res) => {
   const filter = req.query.name ? { name: req.query.name } : {};
   try {
@@ -29,6 +47,15 @@ tradersRouter.get('/traders', async (req, res) => {
   }
 });
 
+
+/**
+ * @route GET /traders/:id
+ * @summary Get a trader by ID
+ * @param req.params.id - Trader ID
+ * @returns 200 - Trader found
+ * @returns 404 - Trader not found
+ * @returns 500 - Server error
+ */
 tradersRouter.get('/traders/:id', async (req, res) => {
   try {
     const trader = await TraderModel.findById(req.params.id);
@@ -42,6 +69,17 @@ tradersRouter.get('/traders/:id', async (req, res) => {
   }
 });
 
+
+/**
+ * @route PATCH /traders
+ * @summary Update trader by name
+ * @param req.query.name - Trader name
+ * @param req.body - Fields to update (name, type, location)
+ * @returns 200 - Trader updated
+ * @returns 400 - Bad request (missing name or body or invalid fields)
+ * @returns 404 - Trader not found
+ * @returns 500 - Server error
+ */
 tradersRouter.patch('/traders', async (req, res) => {
   if (!req.query.name) {
     res.status(400).send({
@@ -81,6 +119,17 @@ tradersRouter.patch('/traders', async (req, res) => {
   }
 });
 
+
+/**
+ * @route PATCH /traders/:id
+ * @summary Update trader by ID
+ * @param req.params.id - Trader ID
+ * @param req.body - Fields to update (name, type, location)
+ * @returns 200 - Trader updated
+ * @returns 400 - Bad request (missing body or invalid fields)
+ * @returns 404 - Trader not found
+ * @returns 500 - Server error
+ */
 tradersRouter.patch('/traders/:id', async (req, res) => {
   if (!req.body) {
     res.status(400).send({
@@ -114,6 +163,16 @@ tradersRouter.patch('/traders/:id', async (req, res) => {
   }
 });
 
+
+/**
+ * @route DELETE /traders
+ * @summary Delete trader by name
+ * @param req.query.name - Trader name
+ * @returns 200 - Trader deleted
+ * @returns 400 - Name not provided
+ * @returns 404 - Trader not found
+ * @returns 500 - Server error
+ */
 tradersRouter.delete('/traders', async (req, res) => {
   if (!req.query.name) {
     res.status(400).send({
@@ -133,6 +192,15 @@ tradersRouter.delete('/traders', async (req, res) => {
   }
 });
 
+
+/**
+ * @route DELETE /traders/:id
+ * @summary Delete trader by ID
+ * @param req.params.id - Trader ID
+ * @returns 200 - Trader deleted
+ * @returns 404 - Trader not found
+ * @returns 500 - Server error
+ */
 tradersRouter.delete('/traders/:id', async (req, res) => {
   try {
     const trader = await TraderModel.findByIdAndDelete(req.params.id);
@@ -146,7 +214,11 @@ tradersRouter.delete('/traders/:id', async (req, res) => {
   }
 });
 
-
+/**
+ * @route ALL /traders/{*splat}
+ * @summary Catch-all for undefined trader routes
+ * @returns 501 - Not implemented
+ */
 tradersRouter.all('/traders/{*splat}', (_, res) => {
   res.status(501).send()
 })

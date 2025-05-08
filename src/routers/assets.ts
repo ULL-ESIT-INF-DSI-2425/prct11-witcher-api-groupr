@@ -1,14 +1,19 @@
 import {AssetModel} from '../models/asset.js';
 import express from 'express';
-// import '../db/mongoose.js'; // Las 3 bases de datos
 
 
 export const Assetrouter = express.Router()
 
 Assetrouter.use(express.json())
 
-//Gets
-
+/**
+ * @route GET /assets/:id
+ * @summary Get an asset by ID
+ * @param req.params.id - The ID of the asset to retrieve
+ * @returns 200 - Asset found
+ * @returns 404 - Asset not found
+ * @returns 500 - Server error
+ */
 Assetrouter.get('/assets/:id', async (req, res) => {
   try {
     const asset = await AssetModel.findById(req.params.id)
@@ -22,6 +27,14 @@ Assetrouter.get('/assets/:id', async (req, res) => {
   }
 })
 
+/**
+ * @route GET /assets
+ * @summary Get all assets or filter by query parameters
+ * @param req.query - Optional filters for asset fields
+ * @returns 200 - Assets found
+ * @returns 404 - No assets matched
+ * @returns 500 - Server error
+ */
 
 Assetrouter.get('/assets', async (req, res) => {
   try {
@@ -51,7 +64,15 @@ Assetrouter.get('/assets', async (req, res) => {
   }
 })
 
-//Post
+/**
+ * @route POST /assets
+ * @summary Create a new asset or increase amount if it already exists
+ * @param req.body - Asset data (must match AssetModel schema)
+ * @returns 201 - Asset created
+ * @returns 200 - Asset amount updated
+ * @returns 400 - Missing body
+ * @returns 500 - Server error
+ */
 
 Assetrouter.post('/assets', async (req, res) => {
   if(!req.body) {
@@ -81,7 +102,14 @@ Assetrouter.post('/assets', async (req, res) => {
   }
 })
 
-// Delete
+/**
+ * @route DELETE /assets/:id
+ * @summary Delete an asset by ID
+ * @param req.params.id - ID of the asset to delete
+ * @returns 200 - Asset deleted successfully
+ * @returns 400 - Missing or invalid ID
+ * @returns 500 - Server error
+ */
 
 Assetrouter.delete('/assets/:id', async (req, res) => {
   if( !req.params.id) {
@@ -99,6 +127,15 @@ Assetrouter.delete('/assets/:id', async (req, res) => {
   }
 })
 
+/**
+ * @route DELETE /assets
+ * @summary Delete an asset by filters
+ * @param req.query - Fields to match for deletion
+ * @returns 200 - Asset deleted
+ * @returns 404 - Asset not found
+ * @returns 500 - Server error
+ */
+
 Assetrouter.delete('/assets', async (req, res) => {
   if(!req.params) {
     res.status(400).send()
@@ -106,10 +143,8 @@ Assetrouter.delete('/assets', async (req, res) => {
   try {
     const allowedFields = [ 'name', 'description', 'weight', 'material', 'crown_value', 'amount'];
     const filter: any = {};
-    //console.log(req.params)
     for (const field of allowedFields) {
       if (req.query[field] !== undefined) {
-        // Convertir números que vienen como string
         if (['weight', 'crown_value', 'amount'].includes(field)) {
           filter[field] = Number(req.query[field]);
         } else {
@@ -129,6 +164,17 @@ Assetrouter.delete('/assets', async (req, res) => {
     res.status(500).send()
   }
 })
+
+/**
+ * @route PATCH /assets
+ * @summary Update asset fields based on query filters
+ * @param req.query - Fields to match assets
+ * @param req.body - Fields to update
+ * @returns 200 - Asset updated
+ * @returns 400 - Invalid field or missing params
+ * @returns 404 - Asset not found
+ * @returns 500 - Server error
+ */
 
 Assetrouter.patch('/assets', async (req, res) => {
   if (!req.params) {
@@ -173,6 +219,16 @@ Assetrouter.patch('/assets', async (req, res) => {
 
 });
 
+/**
+ * @route PATCH /assets/:id
+ * @summary Update an asset by ID
+ * @param req.params.id - ID of the asset to update
+ * @param req.body - Fields to update
+ * @returns 200 - Asset updated successfully
+ * @returns 400 - Invalid update or missing ID
+ * @returns 404 - Asset not found
+ * @returns 500 - Server error
+ */
 
 Assetrouter.patch('/assets/:id', async (req, res) => {
   if(!req.params.id) {
@@ -192,7 +248,6 @@ Assetrouter.patch('/assets/:id', async (req, res) => {
         runValidators: true,
         new: true
       })
-      //console.log(asset)
       if(!asset) {
         res.status(404).send({ error: "Asset not found" })
       } else {

@@ -29,6 +29,26 @@ export interface Trader extends Document {
   location: string;
 }
 
+/**
+ * Schema definition for a Trader entity.
+ * 
+ * This schema defines the structure and validation rules for a trader in the system.
+ * 
+ * @property {string} name - The name of the trader. 
+ * - Must be unique.
+ * - Required field.
+ * - Must start with a capital letter.
+ * - Leading and trailing whitespace is trimmed.
+ * 
+ * @property {string} type - The type of the trader.
+ * - Required field.
+ * - Must be one of the valid values defined in the `TraderTypes` enum.
+ * - Leading and trailing whitespace is trimmed.
+ * 
+ * @property {string} location - The location of the trader.
+ * - Required field.
+ * - Leading and trailing whitespace is trimmed.
+ */
 const TraderSchema = new Schema<Trader>({
   name: {
     unique: true,
@@ -58,5 +78,5 @@ const TraderSchema = new Schema<Trader>({
   }
 })
 
-// export const TraderModel = tradersDB.model<Trader>('Trader', TraderSchema);
+
 export const TraderModel = model<Trader>('Trader', TraderSchema);

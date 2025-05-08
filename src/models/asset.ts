@@ -1,5 +1,5 @@
 import { Document, Schema, model } from 'mongoose';
-// import { assetsDB } from '../db/mongoose.js';
+
 
 
 /**
@@ -61,6 +61,17 @@ export interface Asset extends Document {
   amount: number;
 }
 
+/**
+ * Represents the schema for an Asset in the database.
+ * 
+ * @property name - The name of the asset. Must start with a capital letter.
+ * @property description - A brief description of the asset.
+ * @property weight - The weight of the asset, specified as a number.
+ * @property material - The material of the asset, specified as a string.
+ * @property crown_value - The monetary value of the asset in crowns. Must be greater than 0.
+ * @property type - The type of the asset. Must be a valid value from the `AssetType` enum.
+ * @property amount - The quantity of the asset. This field is required.
+ */
 const AssetSchema = new Schema<Asset>({
   name: {
     type: String,
@@ -114,5 +125,5 @@ const AssetSchema = new Schema<Asset>({
   }
 });
 
-// export const AssetModel = assetsDB.model<Asset>('AssetModel', AssetSchema)
+
 export const AssetModel = model<Asset>('AssetModel', AssetSchema)
