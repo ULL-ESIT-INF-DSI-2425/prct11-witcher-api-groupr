@@ -161,66 +161,64 @@ export const checkChanges = (changes, transaction: TransactionDocumentInterface)
         transaction.innBuying = changes.innBuying // modificamos el valor de la transacción
       }
       //-----------------------------------Division entre modificar comprar/vender y no hacerlo ------------------//
-      else {  // compra/venta no se modifica
-        if ("mercader" in changes) { // comrpobamos si se modifica el mercader
-          if(transaction.innBuying) {
-            const searchedTrader = await TraderModel.find({name: changes.mercader})
-            if (searchedTrader.length === 0) { // comprobamos que exista el nuevo mercader
-              reject('Error: cannot modify the trader, because its not registered')
-            }
-          }
-          else {
-            const searchedHunter = await Hunter.find({name: changes.mercader})
-            if (searchedHunter.length === 0) { // comprobamos que  exista el nuevo mercader
-              reject('Error:cannot modify the hunter, because its not registered')
-            }
+      if ("mercader" in changes) { // comrpobamos si se modifica el mercader
+        if(transaction.innBuying) {
+          const searchedTrader = await TraderModel.findById(changes.mercader)
+          if (!searchedTrader) { // comprobamos que exista el nuevo mercader
+            reject('Error: cannot modify the trader, because its not registered')
           }
         }
-        if ("bienes" in changes) {  // comprobamos si se modifican los bienes
-          const newAssets: Bien[] = changes.bienes // nuevo array de bienes
-          //comrpobamos primero que todos los assets existan y haya suficiente stock
-          newAssets.forEach(async asset => {
-            const searchedAsset = await AssetModel.find({name: asset.asset})
-            if (searchedAsset.length === 0) {
-              reject('Error: one of the new assets are not registered')
-            }
-          })
-          //actualizamos el stock de todos los bienes
-          const oldAssets: Bien[] = transaction.bienes // bienes antes de ser modificados
-          newAssets.forEach(async asset => {
-            const oldAsset = await AssetModel.find({name: asset.asset})
-            let assetFound = false
-            let index = 0
-            let counter = 0
-            oldAssets.forEach(asset2 => {
-              if (asset2.asset === asset.asset) {
-                assetFound = true
-                index = counter
-              }
-              ++counter
-            })
-            if (assetFound) {
-              if (transaction.innBuying) { //comprar, ++amount
-                const newAmount = oldAsset[0].amount + Number(asset.amount) - Number(oldAssets[index].amount)
-                await AssetModel.findOneAndUpdate({name: asset.asset}, {amount: newAmount})
-              }
-              else {  //vender, --amount
-                const newAmount = oldAsset[0].amount + Number(oldAssets[index].amount) - Number(asset.amount)
-                await AssetModel.findOneAndUpdate({name: asset.asset}, {amount: oldAsset[0].amount - Number(asset.amount)})
-              }
-            }
-            else { // si no estaba, solo sumamos o restamos la cantidad 
-              if (transaction.innBuying) { //comprar, ++amount
-                await AssetModel.findOneAndUpdate({name: asset.asset}, {amount: oldAsset[0].amount + Number(asset.amount)})
-              }
-              else {  //vender, --amount
-                await AssetModel.findOneAndUpdate({name: asset.asset}, {amount: oldAsset[0].amount - Number(asset.amount)})
-              }
-            }
-          })
+        else {
+          const searchedHunter = await Hunter.findById(changes.mercader)
+          if (!searchedHunter) { // comprobamos que  exista el nuevo mercader
+            reject('Error:cannot modify the hunter, because its not registered')
+          }
         }
-        resolve(true)
       }
+      if ("bienes" in changes) {  // comprobamos si se modifican los bienes
+        const newAssets: Bien[] = changes.bienes // nuevo array de bienes
+        //comrpobamos primero que todos los assets existan y haya suficiente stock
+        newAssets.forEach(async asset => {
+          const searchedAsset = await AssetModel.findById(asset.asset)
+          if (!searchedAsset) {
+            reject('Error: one of the new assets are not registered')
+          }
+        })
+        //actualizamos el stock de todos los bienes
+        const oldAssets: Bien[] = transaction.bienes // bienes antes de ser modificados
+        newAssets.forEach(async asset => {
+          const oldAsset = await AssetModel.findById(asset.asset)
+          let assetFound = false
+          let index = 0
+          let counter = 0
+          oldAssets.forEach(asset2 => {
+            if (asset2.asset === asset.asset) {
+              assetFound = true
+              index = counter
+            }
+            ++counter
+          })
+          if (assetFound) {
+            if (transaction.innBuying) { //comprar, ++amount
+              const newAmount = oldAsset.amount + Number(asset.amount) - Number(oldAssets[index].amount)
+              await AssetModel.findByIdAndUpdate(asset.asset, {amount: newAmount})
+            }
+            else {  //vender, --amount
+              const newAmount = oldAsset.amount + Number(oldAssets[index].amount) - Number(asset.amount)
+              await AssetModel.findByIdAndUpdate(asset.asset, {amount: newAmount})
+            }
+          }
+          else { // si no estaba, solo sumamos o restamos la cantidad 
+            if (transaction.innBuying) { //comprar, ++amount
+              await AssetModel.findByIdAndUpdate(asset.asset, {amount: oldAsset.amount + Number(asset.amount)})
+            }
+            else {  //vender, --amount
+              await AssetModel.findByIdAndUpdate(asset.asset, {amount: oldAsset.amount - Number(asset.amount)})
+            }
+          }
+        })
+      }
+      resolve(true)
     }
     catch(err){
       reject(err)
