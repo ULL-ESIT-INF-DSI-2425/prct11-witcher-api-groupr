@@ -176,7 +176,7 @@ hunterApp.delete('/hunters/:id', async (req, res) => {
         })
       }
       else {
-        res.status(200).send()
+        res.status(200).send(hunter)
       }
     }
     catch(err) {
