@@ -4,6 +4,7 @@ import { Transaction, TransactionDocumentInterface, Bien} from '../models/transa
 import { TraderModel } from '../models/traders.js';
 import { Hunter } from '../models/hunters.js';
 import { AssetModel } from '../models/asset.js';
+import { exit } from 'process';
 
 export const transactionApp = express.Router()
 
@@ -121,9 +122,18 @@ transactionApp.patch('/transactions/:id', async(req, res) => {
       res.status(400).send('Error: body not provided')
     }
     else {
-      await checkChanges(req.body, searchedTransaction)
+      const update = await checkChanges(req.body, searchedTransaction)
+      if (!update) {
+        res.status(400).send('Error: a trader and a colection of assets must be provided')
+      }
       const modifiedTransaction = await Transaction.findByIdAndUpdate(req.body)
-      res.status(201).send(modifiedTransaction)
+      if (!modifiedTransaction) {
+        res.status(404).send(`Error: Transaction with ID ${req.params.id} not found`)
+      }
+      else {
+        res.status(201).send(modifiedTransaction)
+      }
+      
     }
   }
   catch(err) {
@@ -158,7 +168,8 @@ export const checkChanges = (changes, transaction: TransactionDocumentInterface)
   return new Promise<boolean>(async (resolve, reject) => {
     try {
       if ("innBuying" in changes) { // comprobamos si se va a modificar de compra a venta o viceversa
-        transaction.innBuying = changes.innBuying // modificamos el valor de la transacción
+        // transaction.innBuying = changes.innBuying // modificamos el valor de la transacción
+        console.log('transaction.innBuying', transaction.innBuying)
       }
       //-----------------------------------Division entre modificar comprar/vender y no hacerlo ------------------//
       if ("mercader" in changes) { // comrpobamos si se modifica el mercader
@@ -175,48 +186,72 @@ export const checkChanges = (changes, transaction: TransactionDocumentInterface)
           }
         }
       }
-      if ("bienes" in changes) {  // comprobamos si se modifican los bienes
-        const newAssets: Bien[] = changes.bienes // nuevo array de bienes
-        //comrpobamos primero que todos los assets existan y haya suficiente stock
-        newAssets.forEach(async asset => {
-          const searchedAsset = await AssetModel.findById(asset.asset)
-          if (!searchedAsset) {
-            reject('Error: one of the new assets are not registered')
-          }
-        })
-        //actualizamos el stock de todos los bienes
-        const oldAssets: Bien[] = transaction.bienes // bienes antes de ser modificados
-        newAssets.forEach(async asset => {
-          const oldAsset = await AssetModel.findById(asset.asset)
-          let assetFound = false
-          let index = 0
-          let counter = 0
-          oldAssets.forEach(asset2 => {
-            if (asset2.asset === asset.asset) {
-              assetFound = true
-              index = counter
-            }
-            ++counter
-          })
-          if (assetFound) {
-            if (transaction.innBuying) { //comprar, ++amount
-              const newAmount = oldAsset.amount + Number(asset.amount) - Number(oldAssets[index].amount)
-              await AssetModel.findByIdAndUpdate(asset.asset, {amount: newAmount})
-            }
-            else {  //vender, --amount
-              const newAmount = oldAsset.amount + Number(oldAssets[index].amount) - Number(asset.amount)
-              await AssetModel.findByIdAndUpdate(asset.asset, {amount: newAmount})
-            }
-          }
-          else { // si no estaba, solo sumamos o restamos la cantidad 
-            if (transaction.innBuying) { //comprar, ++amount
-              await AssetModel.findByIdAndUpdate(asset.asset, {amount: oldAsset.amount + Number(asset.amount)})
-            }
-            else {  //vender, --amount
-              await AssetModel.findByIdAndUpdate(asset.asset, {amount: oldAsset.amount - Number(asset.amount)})
-            }
-          }
-        })
+      // if ("bienes" in changes) {  // comprobamos si se modifican los bienes
+      //   const newAssets: Bien[] = changes.bienes // nuevo array de bienes
+      //   //comrpobamos primero que todos los assets existan y haya suficiente stock
+      //   newAssets.forEach(async asset => {
+      //     const searchedAsset = await AssetModel.findById(asset.asset)
+      //     if (!searchedAsset) {
+      //       reject('Error: one of the new assets are not registered')
+      //     }
+      //   })
+      //   //actualizamos el stock de todos los bienes
+      //   const oldAssets: Bien[] = transaction.bienes // bienes antes de ser modificados
+      //   newAssets.forEach(async asset => {
+      //     const oldAsset = await AssetModel.findById(asset.asset)
+      //     let assetFound = false
+      //     let index = 0
+      //     let counter = 0
+      //     oldAssets.forEach(asset2 => {
+      //       if (String(asset2.asset) === String(asset.asset)) {
+      //         assetFound = true
+      //         index = counter
+      //       }
+      //       ++counter
+      //     })
+      //     if (assetFound) {
+      //       if (transaction.innBuying) { //comprar, ++amount
+      //         const newAmount = oldAsset.amount + Number(asset.amount) - Number(oldAssets[index].amount)
+      //         console.log('newAmount', newAmount)
+      //         if (newAmount < 0) {
+      //           reject(`Error: not enough ${oldAsset.name} in stock`)
+      //         }
+      //         await AssetModel.findByIdAndUpdate(asset.asset, {amount: newAmount})
+      //       }
+      //       else {  //vender, --amount
+      //         const newAmount = oldAsset.amount + Number(oldAssets[index].amount) - Number(asset.amount)
+      //         console.log('newAmount', newAmount)
+      //         if (newAmount < 0) {
+      //           reject(`Error: not enough ${oldAsset.name} in stock`)
+      //         }
+      //         await AssetModel.findByIdAndUpdate(asset.asset, {amount: newAmount})
+      //       }
+      //     }
+      //     else { // si no estaba, solo sumamos o restamos la cantidad 
+      //       if (transaction.innBuying) { //comprar, ++amount
+      //         await AssetModel.findByIdAndUpdate(asset.asset, {amount: oldAsset.amount + Number(asset.amount)})
+      //       }
+      //       else {  //vender, --amount
+      //         if (oldAsset.amount - Number(asset.amount) < 0) {
+      //           reject(`Error: not enough ${oldAsset.name} in stock`)
+      //         }
+      //         await AssetModel.findByIdAndUpdate(asset.asset, {amount: oldAsset.amount - Number(asset.amount)})
+      //       }
+      //     }
+      //   console.log('asset', asset)
+      //   })
+      // }
+      if ("date" in changes) { // comprobamos si se modifica la fecha
+        const newDate = new Date(changes.date)
+        if (newDate > new Date()) {
+          reject('Error: a transaction can`t have a future date')
+        }
+      }
+      if ("crownValue" in changes) { // comprobamos si se modifica el valor de la corona
+        const newCrownValue = changes.crownValue
+        if (newCrownValue < 0) {
+          reject('Error: a transaction can`t have a negative crown value')
+        }
       }
       resolve(true)
     }
