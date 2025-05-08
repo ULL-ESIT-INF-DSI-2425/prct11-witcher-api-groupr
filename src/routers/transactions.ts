@@ -1,6 +1,6 @@
 import express from 'express';
 import '../db/mongoose.js';
-import { Transaction, TransactionDocumentInterface } from '../models/transaction.js';
+import { Transaction, TransactionDocumentInterface, Bien} from '../models/transaction.js';
 import { TraderModel } from '../models/traders.js';
 import { Hunter } from '../models/hunters.js';
 import { AssetModel } from '../models/asset.js';
@@ -89,7 +89,23 @@ transactionApp.post('/transactions', async(req, res) => {
 })
 
 transactionApp.patch('/transactions/:id', async(req, res) => {
+  try {
+    const searchedTransaction = await Transaction.findById(req.params.id)
+    if (!searchedTransaction) {
+      res.status(404).send(`Error: Transaction wiht ID ${req.params.id} not found`)
+    }
+    else if (!req.body) {
+      res.status(400).send('Error: body not provided')
+    }
+    else {
+      await checkChanges(req.body, searchedTransaction)
+      const modifiedTransaction = await Transaction.findByIdAndUpdate(req.body)
+      res.status(201).send(modifiedTransaction)
+    }
+  }
+  catch(err) {
 
+  }
 })
 
 transactionApp.delete('/transactions/:id', async(req, res) => {
@@ -114,6 +130,52 @@ transactionApp.delete('/transactions/:id', async(req, res) => {
   }
 
 })
+
+export const checkChanges = (changes, transaction: TransactionDocumentInterface): Promise<boolean> => {
+  return new Promise<boolean>(async (resolve, reject) => {
+    try {
+      if ("innBuying" in changes) { // comprobamos si se va a modificar de compra a venta o viceversa
+        resolve(true)
+      }
+      //-----------------------------------Division entre modificar comprar/vender y no hacerlo ------------------//
+      else {  // compra/venta no se modifica
+        if ("mercader" in changes) { // comrpobamos si se modifica el mercader
+          if(transaction.innBuying) {
+            const searchedTrader = await TraderModel.find({name: changes.mercader})
+            if (searchedTrader.length === 0) { // comprobamos que exista el nuevo mercader
+              reject('Error: cannot modify the trader, because its not registered')
+            }
+          }
+          else {
+            const searchedHunter = await Hunter.find({name: changes.mercader})
+            if (searchedHunter.length === 0) { // comprobamos que  exista el nuevo mercader
+              reject('Error:cannot modify the hunter, because its not registered')
+            }
+          }
+        }
+        if ("bienes" in changes) {  // comprobamos si se modifican los bienes
+          const newAssets: Bien[] = changes.bienes
+          //comrpobamos primero que todos los assets existan y haya suficiente stock
+          newAssets.forEach(async asset => {
+            const searchedAsset = await AssetModel.find({name: asset.asset})
+            if (searchedAsset.length === 0) {
+              reject('Error: one of the new assets are not registered')
+            }
+            else if (!transaction.innBuying && searchedAsset[0].amount < Number(asset.amount)) {
+              reject('Error: insuficient stock to sell one of the updated assets')
+            }
+          })
+          //actualizamos el stock de todos los bienes
+          
+        }
+        resolve(true)
+      }
+    }
+    catch(err){
+      reject(err)
+    }
+  })
+}
 
 export const checkDB = (transaction: TransactionDocumentInterface): Promise<boolean> => {
   return new Promise<boolean>(async (resolve, reject) => {
