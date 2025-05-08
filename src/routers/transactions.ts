@@ -3,7 +3,7 @@ import '../db/mongoose.js';
 import { Transaction, TransactionDocumentInterface } from '../models/transaction.js';
 import { TraderModel } from '../models/traders.js';
 import { Hunter } from '../models/hunters.js';
-import { AssetModel, Asset } from '../models/asset.js';
+import { AssetModel } from '../models/asset.js';
 
 export const transactionApp = express.Router()
 

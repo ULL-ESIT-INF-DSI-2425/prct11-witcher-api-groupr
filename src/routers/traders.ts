@@ -3,7 +3,7 @@ import '../db/mongoose.js';
 import { TraderModel } from '../models/traders.js';
 
 
-export const tradersRouter = express();
+export const tradersRouter = express.Router();
 
 tradersRouter.post('/traders', async (req, res) => {
   const trader = new TraderModel(req.body)

@@ -1,5 +1,5 @@
-import { Document, Schema } from 'mongoose';
-import { assetsDB } from '../db/mongoose.js';
+import { Document, Schema, model } from 'mongoose';
+// import { assetsDB } from '../db/mongoose.js';
 
 
 /**
@@ -114,4 +114,5 @@ const AssetSchema = new Schema<Asset>({
   }
 });
 
-export const AssetModel = assetsDB.model<Asset>('AssetModel', AssetSchema)
+// export const AssetModel = assetsDB.model<Asset>('AssetModel', AssetSchema)
+export const AssetModel = model<Asset>('AssetModel', AssetSchema)

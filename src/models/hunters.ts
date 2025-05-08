@@ -1,5 +1,5 @@
-import { Document, Schema } from 'mongoose';
-import { huntersDB } from '../db/mongoose.js';
+import { Document, Schema, model } from 'mongoose';
+// import { huntersDB } from '../db/mongoose.js';
 
 export enum Race {
   WITCH = "WITCH", 
@@ -34,5 +34,6 @@ export const HunterSchema = new Schema<HunterDocumentInterface>({
   }
 });
 
-export const Hunter = huntersDB.model<HunterDocumentInterface>('Hunter', HunterSchema)
+// export const Hunter = huntersDB.model<HunterDocumentInterface>('Hunter', HunterSchema)
+export const Hunter = model<HunterDocumentInterface>('Hunter', HunterSchema)
 

@@ -1,5 +1,5 @@
-import {Document,  Schema} from 'mongoose'
-import { transactionsDB } from '../db/mongoose.js'
+import {Document,  Schema, model} from 'mongoose'
+// import { transactionsDB } from '../db/mongoose.js'
 import { Trader, TraderModel} from './traders.js'
 import { Asset , AssetModel} from './asset.js'
 import {Types} from 'mongoose'
@@ -62,4 +62,5 @@ export const TransactionSquema = new Schema<TransactionDocumentInterface>({
   }
 })
 
-export const Transaction = transactionsDB.model<TransactionDocumentInterface>('Transaction', TransactionSquema)
+export const Transaction = model<TransactionDocumentInterface>('Transaction', TransactionSquema)
+// export const Transaction = transactionsDB.model<TransactionDocumentInterface>('Transaction', TransactionSquema)

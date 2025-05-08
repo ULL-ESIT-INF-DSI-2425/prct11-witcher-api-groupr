@@ -1,6 +1,6 @@
 import {AssetModel} from '../models/asset.js';
 import express from 'express';
-import '../db/mongoose.js'; // Las 3 bases de datos
+// import '../db/mongoose.js'; // Las 3 bases de datos
 
 
 export const Assetrouter = express.Router()

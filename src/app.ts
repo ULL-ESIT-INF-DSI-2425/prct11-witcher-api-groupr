@@ -7,7 +7,7 @@ import { transactionApp } from './routers/transactions.js';
 
 export const app = express();
 app.use(express.json());
-app.use('/traders', tradersRouter);
-app.use('/hunters', hunterApp);
-app.use('/assets', Assetrouter)
-app.use('/transactions', transactionApp)
+app.use(tradersRouter);
+app.use(hunterApp);
+app.use(Assetrouter)
+app.use(transactionApp)

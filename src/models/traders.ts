@@ -1,5 +1,5 @@
-import { Document, Schema } from 'mongoose';
-import { tradersDB } from '../db/mongoose.js';
+import { Document, Schema, model } from 'mongoose';
+// import { tradersDB } from '../db/mongoose.js';
 
 /**
  * Enum representing different types of traders.
@@ -58,4 +58,5 @@ const TraderSchema = new Schema<Trader>({
   }
 })
 
-export const TraderModel = tradersDB.model<Trader>('Trader', TraderSchema);
+// export const TraderModel = tradersDB.model<Trader>('Trader', TraderSchema);
+export const TraderModel = model<Trader>('Trader', TraderSchema);
