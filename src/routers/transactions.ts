@@ -15,13 +15,36 @@ transactionApp.get('/transactions', async (req, res) => {
   }
   else if (req.query.name) {
     try {
-      const transaction = await Transaction.find({mercader: req.query.name})
-      if (!transaction) {
-        res.status(404).send(`Trader wiht name ${req.query.name} not found`)
+      const searchedTrader = await TraderModel.find({name: req.query.name})
+      const searchedHunter = await Hunter.find({name: req.query.name})
+      if (searchedTrader.length === 0 && searchedHunter.length === 0) {
+        res.status(404).send(`Trader with name ${req.query.name} not found`)
+      } else {
+        if (searchedTrader.length > 0) {
+          const transaction = await Transaction.find({mercader: searchedTrader[0]._id})
+          if (!transaction) {
+            res.status(404).send(`Trader with name ${req.query.name} not found`)
+          }
+          else {
+            res.status(200).send(transaction)
+          }
+        } else {
+          const transaction = await Transaction.find({mercader: searchedHunter[0]._id})
+          if (!transaction) {
+            res.status(404).send(`Trader with name ${req.query.name} not found`)
+          }
+          else {
+            res.status(200).send(transaction)
+          }
+        }
       }
-      else {
-        res.status(200).send(transaction)
-      }
+      // const transaction = await Transaction.find({mercader: req.query.name})
+      // if (!transaction) {
+      //   res.status(404).send(`Trader wiht name ${req.query.name} not found`)
+      // }
+      // else {
+      //   res.status(200).send(transaction)
+      // }
     }
     catch(err) {
       res.status(500).send(err)
@@ -135,7 +158,7 @@ export const checkChanges = (changes, transaction: TransactionDocumentInterface)
   return new Promise<boolean>(async (resolve, reject) => {
     try {
       if ("innBuying" in changes) { // comprobamos si se va a modificar de compra a venta o viceversa
-        resolve(true)
+        transaction.innBuying = changes.innBuying // modificamos el valor de la transacción
       }
       //-----------------------------------Division entre modificar comprar/vender y no hacerlo ------------------//
       else {  // compra/venta no se modifica
@@ -214,13 +237,13 @@ export const checkDB = (transaction: TransactionDocumentInterface): Promise<bool
       try {
         if (transaction.innBuying) {
           //comprobamos la existencia del mercader
-          const trader = await TraderModel.find({name: transaction.mercader})
+          const trader = await TraderModel.findById(transaction.mercader)
           if (!trader) {
             reject('Error: trader not registered')
           }
         } else {
           //comprobamos la existencia del mercader
-          const hunter = await Hunter.find({name: transaction.mercader})
+          const hunter = await Hunter.findById(transaction.mercader)
           if (!hunter) {
             reject('Error: hunter not registered')
           }
@@ -229,13 +252,13 @@ export const checkDB = (transaction: TransactionDocumentInterface): Promise<bool
         //y que no se haya indicado el mismo dos veces
         let bienes: string[] = []
         transaction.bienes.forEach(async bien => {
-          const searchedAsset = await AssetModel.find({name: bien.asset})
+          const searchedAsset = await AssetModel.findById(bien.asset)
           if (!searchedAsset) { // Si el asset no existe
-            reject(`Error: Asset with name ${bien.asset} not found`)
+            reject(`Error: Asset with ID ${bien.asset} not found`)
           }
           else {
-            if (!bienes.includes(searchedAsset[0].name)) { //Si el asset no está duplicado
-              bienes.push(searchedAsset[0].name)
+            if (!bienes.includes(searchedAsset.name)) { //Si el asset no está duplicado
+              bienes.push(searchedAsset.name)
             }
             else { //Si el asset esta duplicado
               reject('Error: duplicated assets')
@@ -261,13 +284,13 @@ export const updateStock = (transaction: TransactionDocumentInterface, reverse?:
       //Si la posada está comprando, hay que añadir el bien o actualizar el stock
       if (operation) {
         transaction.bienes.forEach(async bien => {
-          const searchedAsset = await AssetModel.find({name: bien.asset})
+          const searchedAsset = await AssetModel.findById(bien.asset)
           if (!searchedAsset) { 
-            reject(`Asset with name ${bien.asset} not found`)
+            reject(`Asset with ID ${bien.asset} not found`)
           }
           else {
-            const newAmount = searchedAsset[0].amount + Number(bien.amount)
-            await AssetModel.findOneAndUpdate({name: searchedAsset[0].name}, {amount: newAmount})
+            const newAmount = searchedAsset.amount + Number(bien.amount)
+            await AssetModel.findOneAndUpdate({name: searchedAsset.name}, {amount: newAmount})
             resolve(true)
           }
         })
@@ -275,16 +298,16 @@ export const updateStock = (transaction: TransactionDocumentInterface, reverse?:
       else {
         //Reducir la cantidad del bien o eliminarlo por completo si llega a 0
         transaction.bienes.forEach(async bien => {
-          const searchedAsset = await AssetModel.find({name: bien.asset})
+          const searchedAsset = await AssetModel.findById(bien.asset)
           if (!searchedAsset) {  //añadir 
-            reject(`Asset with name ${bien.asset} not found`)
+            reject(`Asset with ID ${bien.asset} not found`)
           }
           else {
-            const newAmount = searchedAsset[0].amount - Number(bien.amount)
+            const newAmount = searchedAsset.amount - Number(bien.amount)
             if (newAmount < 0) {
-              reject(`Error: not enough ${searchedAsset[0].name} in stock`)
+              reject(`Error: not enough ${searchedAsset.name} in stock`)
             } else {
-              await AssetModel.findOneAndUpdate({name: searchedAsset[0].name}, {amount: newAmount})
+              await AssetModel.findOneAndUpdate({name: searchedAsset.name}, {amount: newAmount})
               resolve(true)
             }
           }

@@ -53,7 +53,8 @@ export const HunterSchema = new Schema<HunterDocumentInterface>({
   name: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
+    unique: true,
   },
   race: {
     type: String,
