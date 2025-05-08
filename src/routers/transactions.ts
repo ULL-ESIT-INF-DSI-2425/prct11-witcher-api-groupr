@@ -10,6 +10,24 @@ export const transactionApp = express.Router()
 
 transactionApp.use(express.json())
 
+
+/**
+ * GET /transactions endpoint.
+ * 
+ * Retrieves a list of transactions based on a trader/hunter's name or a date range.
+ * 
+ * - If `name` is provided, it searches for transactions involving the trader or hunter with that name.
+ * - If `firstDay` and `lastDay` are provided, it filters transactions by date.
+ * 
+ * @route GET /transactions
+ * @queryParam {string} [name] - The name of the trader or hunter.
+ * @queryParam {string} [firstDay] - The minimum transaction date (ISO format).
+ * @queryParam {string} [lastDay] - The maximum transaction date (ISO format).
+ * @returns {Transaction[]} 200 - A list of transactions.
+ * @returns {string} 400 - If name or date parameters are missing.
+ * @returns {string} 404 - If no transactions are found.
+ * @returns {Error} 500 - Server error.
+ */
 transactionApp.get('/transactions', async (req, res) => {
   if (!req.query.name && !req.query.firstDay) {
     res.status(400).send('A trader Name or a date must be provided')
@@ -39,13 +57,6 @@ transactionApp.get('/transactions', async (req, res) => {
           }
         }
       }
-      // const transaction = await Transaction.find({mercader: req.query.name})
-      // if (!transaction) {
-      //   res.status(404).send(`Trader wiht name ${req.query.name} not found`)
-      // }
-      // else {
-      //   res.status(200).send(transaction)
-      // }
     }
     catch(err) {
       res.status(500).send(err)
@@ -72,6 +83,17 @@ transactionApp.get('/transactions', async (req, res) => {
   }
 })
 
+/**
+ * GET /transactions/:id endpoint.
+ * 
+ * Retrieves a single transaction by its ID.
+ * 
+ * @route GET /transactions/:id
+ * @param {string} id - The ID of the transaction to retrieve.
+ * @returns {Transaction} 200 - The found transaction.
+ * @returns {string} 404 - If the transaction is not found.
+ * @returns {Error} 500 - Server error.
+ */
 transactionApp.get('/transactions/:id', async(req, res) => {
   try {
     const transaction = await Transaction.findById(req.params.id)
@@ -84,6 +106,19 @@ transactionApp.get('/transactions/:id', async(req, res) => {
   }
 })
 
+
+/**
+ * POST /transactions endpoint.
+ * 
+ * Creates a new transaction. Validates that the trader and assets exist, then saves the transaction.
+ * Also updates the asset stock.
+ * 
+ * @route POST /transactions
+ * @bodyParam {Transaction} transaction - The transaction object including trader, assets, etc.
+ * @returns {Transaction} 201 - The created transaction.
+ * @returns {string} 400 - If required fields are missing or validation fails.
+ * @returns {Error} 500 - Server error.
+ */
 transactionApp.post('/transactions', async(req, res) => {
   if (!req.body || !req.body.mercader || !req.body.bienes) {
     res.status(400).send('Error: a body must be specified')
@@ -112,6 +147,20 @@ transactionApp.post('/transactions', async(req, res) => {
   }
 })
 
+
+/**
+ * PATCH /transactions/:id endpoint.
+ * 
+ * Updates an existing transaction by ID. Checks for valid changes before applying them.
+ * 
+ * @route PATCH /transactions/:id
+ * @param {string} id - The ID of the transaction to update.
+ * @bodyParam {Partial<Transaction>} changes - The updated fields for the transaction.
+ * @returns {Transaction} 201 - The modified transaction.
+ * @returns {string} 400 - If the body is invalid or updates are not allowed.
+ * @returns {string} 404 - If the transaction does not exist.
+ * @returns {Error} 500 - Server error.
+ */
 transactionApp.patch('/transactions/:id', async(req, res) => {
   try {
     const searchedTransaction = await Transaction.findById(req.params.id)
@@ -141,6 +190,18 @@ transactionApp.patch('/transactions/:id', async(req, res) => {
   }
 })
 
+/**
+ * DELETE /transactions/:id endpoint.
+ * 
+ * Deletes a transaction by ID and restores the stock for the involved assets.
+ * 
+ * @route DELETE /transactions/:id
+ * @param {string} id - The ID of the transaction to delete.
+ * @returns {Transaction} 200 - The deleted transaction.
+ * @returns {string} 400 - If the ID is missing.
+ * @returns {string} 404 - If the transaction does not exist.
+ * @returns {Error} 500 - Server error.
+ */
 transactionApp.delete('/transactions/:id', async(req, res) => {
   if (!req.params.id) {
     res.status(400).send('Error: a transaction id must be provided')
@@ -164,6 +225,17 @@ transactionApp.delete('/transactions/:id', async(req, res) => {
 
 })
 
+/**
+ * Validates proposed changes to a transaction.
+ * 
+ * Ensures that the updated transaction contains valid trader/hunter, date, and crown value.
+ * It may reject updates if constraints are not met.
+ * 
+ * @param {Partial<Transaction>} changes - The proposed modifications to the transaction.
+ * @param {TransactionDocumentInterface} transaction - The current transaction to compare against.
+ * @returns {Promise<boolean>} - Resolves true if the changes are valid, otherwise rejects with an error message.
+ */
+
 export const checkChanges = (changes, transaction: TransactionDocumentInterface): Promise<boolean> => {
   return new Promise<boolean>(async (resolve, reject) => {
     try {
@@ -186,61 +258,6 @@ export const checkChanges = (changes, transaction: TransactionDocumentInterface)
           }
         }
       }
-      // if ("bienes" in changes) {  // comprobamos si se modifican los bienes
-      //   const newAssets: Bien[] = changes.bienes // nuevo array de bienes
-      //   //comrpobamos primero que todos los assets existan y haya suficiente stock
-      //   newAssets.forEach(async asset => {
-      //     const searchedAsset = await AssetModel.findById(asset.asset)
-      //     if (!searchedAsset) {
-      //       reject('Error: one of the new assets are not registered')
-      //     }
-      //   })
-      //   //actualizamos el stock de todos los bienes
-      //   const oldAssets: Bien[] = transaction.bienes // bienes antes de ser modificados
-      //   newAssets.forEach(async asset => {
-      //     const oldAsset = await AssetModel.findById(asset.asset)
-      //     let assetFound = false
-      //     let index = 0
-      //     let counter = 0
-      //     oldAssets.forEach(asset2 => {
-      //       if (String(asset2.asset) === String(asset.asset)) {
-      //         assetFound = true
-      //         index = counter
-      //       }
-      //       ++counter
-      //     })
-      //     if (assetFound) {
-      //       if (transaction.innBuying) { //comprar, ++amount
-      //         const newAmount = oldAsset.amount + Number(asset.amount) - Number(oldAssets[index].amount)
-      //         console.log('newAmount', newAmount)
-      //         if (newAmount < 0) {
-      //           reject(`Error: not enough ${oldAsset.name} in stock`)
-      //         }
-      //         await AssetModel.findByIdAndUpdate(asset.asset, {amount: newAmount})
-      //       }
-      //       else {  //vender, --amount
-      //         const newAmount = oldAsset.amount + Number(oldAssets[index].amount) - Number(asset.amount)
-      //         console.log('newAmount', newAmount)
-      //         if (newAmount < 0) {
-      //           reject(`Error: not enough ${oldAsset.name} in stock`)
-      //         }
-      //         await AssetModel.findByIdAndUpdate(asset.asset, {amount: newAmount})
-      //       }
-      //     }
-      //     else { // si no estaba, solo sumamos o restamos la cantidad 
-      //       if (transaction.innBuying) { //comprar, ++amount
-      //         await AssetModel.findByIdAndUpdate(asset.asset, {amount: oldAsset.amount + Number(asset.amount)})
-      //       }
-      //       else {  //vender, --amount
-      //         if (oldAsset.amount - Number(asset.amount) < 0) {
-      //           reject(`Error: not enough ${oldAsset.name} in stock`)
-      //         }
-      //         await AssetModel.findByIdAndUpdate(asset.asset, {amount: oldAsset.amount - Number(asset.amount)})
-      //       }
-      //     }
-      //   console.log('asset', asset)
-      //   })
-      // }
       if ("date" in changes) { // comprobamos si se modifica la fecha
         const newDate = new Date(changes.date)
         if (newDate > new Date()) {
@@ -260,6 +277,15 @@ export const checkChanges = (changes, transaction: TransactionDocumentInterface)
     }
   })
 }
+
+/**
+ * Validates if the trader/hunter and all involved assets in the transaction exist in the database.
+ * 
+ * Ensures no duplicate assets are provided.
+ * 
+ * @param {TransactionDocumentInterface} transaction - The transaction to validate.
+ * @returns {Promise<boolean>} - Resolves true if all checks pass, otherwise rejects with an error.
+ */
 
 export const checkDB = (transaction: TransactionDocumentInterface): Promise<boolean> => {
   return new Promise<boolean>(async (resolve, reject) => {
@@ -307,6 +333,17 @@ export const checkDB = (transaction: TransactionDocumentInterface): Promise<bool
     }
   })
 }
+
+
+/**
+ * Updates asset stock based on a transaction. Can also reverse the operation (e.g., on delete).
+ * 
+ * If buying, it adds to the stock. If selling, it subtracts from the stock and ensures availability.
+ * 
+ * @param {TransactionDocumentInterface} transaction - The transaction to apply or reverse.
+ * @param {boolean} [reverse] - If true, the stock update will be reversed.
+ * @returns {Promise<boolean>} - Resolves true if the stock was successfully updated, otherwise rejects with an error.
+ */
 
 export const updateStock = (transaction: TransactionDocumentInterface, reverse?: boolean): Promise<boolean> => {
   return new Promise<boolean>(async(resolve, reject) => {
